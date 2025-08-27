@@ -36,7 +36,7 @@ const Location = () => {
     fetchLocations();
     // Check for saved selections
     const savedLocation = localStorage.getItem("safedine.location");
-    const savedRestaurant = localStorage.getItem("safedine.restaurant");
+    const savedRestaurant = localStorage.getItem("safedine.restaurantId");
     if (savedLocation) setSelectedLocationId(savedLocation);
     if (savedRestaurant) setSelectedRestaurantId(savedRestaurant);
   }, []);
@@ -98,12 +98,17 @@ const Location = () => {
     setSelectedLocationId(locationId);
     setSelectedRestaurantId(""); // Reset restaurant selection
     localStorage.setItem("safedine.location", locationId);
-    localStorage.removeItem("safedine.restaurant");
+    localStorage.removeItem("safedine.restaurantId");
+    localStorage.removeItem("safedine.restaurantName");
   };
 
   const handleRestaurantSelect = (restaurantId: string) => {
     setSelectedRestaurantId(restaurantId);
-    localStorage.setItem("safedine.restaurant", restaurantId);
+    const restaurant = restaurants.find(r => r.id === restaurantId);
+    localStorage.setItem("safedine.restaurantId", restaurantId);
+    if (restaurant) {
+      localStorage.setItem("safedine.restaurantName", restaurant.name);
+    }
   };
 
   const handleContinue = () => {
