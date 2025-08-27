@@ -142,22 +142,52 @@ export default function TableSelection() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <LoadingSpinner size="lg" className="mb-4" />
-        <p className="text-muted-foreground">Fetching tables...</p>
+      <div className="min-h-screen bg-background">
+        <header className="bg-card shadow-soft border-b">
+          <div className="px-4 py-6">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Select your table
+            </h1>
+            <p className="text-muted-foreground">
+              Tap your table number to continue.
+            </p>
+          </div>
+        </header>
+
+        <main className="px-4 py-6">
+          {/* Search Input Skeleton */}
+          <div className="relative mb-6">
+            <div className="h-12 bg-muted animate-pulse rounded-md"></div>
+          </div>
+
+          {/* Skeleton Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-muted animate-pulse rounded-lg h-20 shadow-soft"
+              />
+            ))}
+          </div>
+
+          {/* Continue Button Skeleton */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t">
+            <div className="w-full h-12 bg-muted animate-pulse rounded-md"></div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-card shadow-soft border-b">
         <div className="px-4 py-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">
             Select your table
           </h1>
           <p className="text-muted-foreground">
-            Choose your table at {restaurantName}
+            Tap your table number to continue.
           </p>
         </div>
       </header>
@@ -202,7 +232,7 @@ export default function TableSelection() {
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
                   {tables.length === 0 
-                    ? "No tables found for this restaurant. Enter your table code."
+                    ? "No tables available for this restaurant."
                     : "No tables match your search. Try a different code."
                   }
                 </p>
@@ -217,14 +247,14 @@ export default function TableSelection() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
                 {filteredTables.map((table) => (
                   <Card
                     key={table.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-medium active:scale-95 rounded-lg border ${
                       selectedTable?.code === table.code
-                        ? "ring-2 ring-primary bg-primary/5"
-                        : "hover:bg-accent"
+                        ? "ring-2 ring-primary bg-primary/10 border-primary shadow-medium"
+                        : "border-border hover:border-primary/30 hover:bg-primary/5 shadow-soft"
                     }`}
                     onClick={() => handleTableSelect(table)}
                     role="button"
@@ -232,12 +262,13 @@ export default function TableSelection() {
                     aria-label={`Select table ${table.code}`}
                     onKeyPress={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
                         handleTableSelect(table);
                       }
                     }}
                   >
-                    <CardContent className="p-4 text-center min-h-[44px] flex items-center justify-center">
-                      <span className="text-lg font-semibold">
+                    <CardContent className="p-6 text-center min-h-[60px] flex items-center justify-center">
+                      <span className="text-2xl font-bold text-foreground">
                         {table.code}
                       </span>
                     </CardContent>
@@ -250,9 +281,9 @@ export default function TableSelection() {
 
         {/* Selected Table Summary */}
         {selectedTable && (
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-primary/10 border border-primary/20 rounded-lg p-4 mb-6 shadow-soft">
             <p className="text-sm text-muted-foreground mb-1">Selected table:</p>
-            <p className="font-semibold text-primary">Table {selectedTable.code}</p>
+            <p className="font-bold text-primary text-lg">Table {selectedTable.code}</p>
           </div>
         )}
 
