@@ -1,0 +1,273 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { toast } from "@/components/ui/use-toast";
+import { Search, AlertCircle, RefreshCw } from "lucide-react";
+
+interface DiningTable {
+  id: string;
+  restaurant_id: string;
+  code: string;
+}
+
+export default function TableSelection() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [tables, setTables] = useState<DiningTable[]>([]);
+  const [filteredTables, setFilteredTables] = useState<DiningTable[]>([]);
+  const [selectedTable, setSelectedTable] = useState<DiningTable | null>(null);
+  const [searchCode, setSearchCode] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get restaurant from localStorage
+  const restaurantId = localStorage.getItem("safedine.restaurantId");
+  const restaurantName = localStorage.getItem("safedine.restaurantName");
+
+  useEffect(() => {
+    if (!restaurantId) {
+      navigate("/location");
+      return;
+    }
+
+    // Check for QR code table detection
+    const tableIdFromUrl = searchParams.get("tableId");
+    const tableCodeFromUrl = searchParams.get("tableCode");
+    const tableIdFromStorage = localStorage.getItem("safedine.tableId");
+    const tableCodeFromStorage = localStorage.getItem("safedine.tableCode");
+
+    if (tableIdFromUrl || tableCodeFromUrl || tableIdFromStorage || tableCodeFromStorage) {
+      const code = tableCodeFromUrl || tableCodeFromStorage;
+      if (code) {
+        toast({
+          title: `Table ${code} detected`,
+          description: "Redirecting to consent...",
+        });
+        setTimeout(() => navigate("/consent"), 1500);
+        return;
+      }
+    }
+
+    fetchTables();
+  }, [restaurantId, navigate, searchParams]);
+
+  useEffect(() => {
+    // Filter tables based on search
+    if (searchCode.trim() === "") {
+      setFilteredTables(tables);
+    } else {
+      setFilteredTables(
+        tables.filter(table =>
+          table.code.toLowerCase().includes(searchCode.toLowerCase())
+        )
+      );
+    }
+  }, [tables, searchCode]);
+
+  const fetchTables = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from("dining_tables")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("code::integer");
+
+      if (fetchError) throw fetchError;
+      
+      setTables(data || []);
+    } catch (err) {
+      console.error("Error fetching tables:", err);
+      setError("Couldn't load tables. Check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTableSelect = (table: DiningTable) => {
+    setSelectedTable(table);
+    
+    // Save to localStorage
+    localStorage.setItem("safedine.tableId", table.id);
+    localStorage.setItem("safedine.tableCode", table.code);
+    
+    toast({
+      title: `Table ${table.code} selected`,
+      description: "Ready to continue",
+    });
+  };
+
+  const handleManualCodeSubmit = (code: string) => {
+    const trimmedCode = code.trim();
+    if (!trimmedCode) return;
+
+    // Try to find the table in current restaurant
+    const foundTable = tables.find(table => 
+      table.code.toLowerCase() === trimmedCode.toLowerCase()
+    );
+
+    if (foundTable) {
+      handleTableSelect(foundTable);
+    } else {
+      // Allow proceeding with code even if not found in database
+      localStorage.setItem("safedine.tableCode", trimmedCode);
+      localStorage.removeItem("safedine.tableId");
+      
+      toast({
+        title: `Table ${trimmedCode} selected`,
+        description: "Code will be verified with restaurant",
+      });
+      
+      setSelectedTable({ id: "", restaurant_id: restaurantId!, code: trimmedCode });
+    }
+  };
+
+  const handleContinue = () => {
+    if (selectedTable) {
+      navigate("/consent");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && searchCode.trim()) {
+      handleManualCodeSubmit(searchCode);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <LoadingSpinner size="lg" className="mb-4" />
+        <p className="text-muted-foreground">Fetching tables...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="bg-white shadow-sm border-b">
+        <div className="px-4 py-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Select your table
+          </h1>
+          <p className="text-muted-foreground">
+            Choose your table at {restaurantName}
+          </p>
+        </div>
+      </header>
+
+      <main className="px-4 py-6">
+        {/* Search Input */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search table code (e.g., 12)"
+            value={searchCode}
+            onChange={(e) => setSearchCode(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="pl-10 text-base h-12"
+            aria-label="Search for table by code"
+          />
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 p-4 border border-destructive/20 bg-destructive/5 rounded-lg flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-destructive mb-2">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchTables}
+                className="h-8"
+              >
+                <RefreshCw className="w-3 h-3 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Tables Grid */}
+        {!error && (
+          <>
+            {filteredTables.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">
+                  {tables.length === 0 
+                    ? "No tables found for this restaurant. Enter your table code."
+                    : "No tables match your search. Try a different code."
+                  }
+                </p>
+                {searchCode.trim() && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleManualCodeSubmit(searchCode)}
+                    className="mt-2"
+                  >
+                    Use code "{searchCode}"
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 mb-8">
+                {filteredTables.map((table) => (
+                  <Card
+                    key={table.id}
+                    className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      selectedTable?.code === table.code
+                        ? "ring-2 ring-primary bg-primary/5"
+                        : "hover:bg-accent"
+                    }`}
+                    onClick={() => handleTableSelect(table)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Select table ${table.code}`}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        handleTableSelect(table);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-4 text-center min-h-[44px] flex items-center justify-center">
+                      <span className="text-lg font-semibold">
+                        {table.code}
+                      </span>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Selected Table Summary */}
+        {selectedTable && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+            <p className="text-sm text-muted-foreground mb-1">Selected table:</p>
+            <p className="font-semibold text-primary">Table {selectedTable.code}</p>
+          </div>
+        )}
+
+        {/* Continue Button */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t">
+          <Button
+            onClick={handleContinue}
+            disabled={!selectedTable}
+            className="w-full h-12 text-base"
+            size="lg"
+          >
+            Continue
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      dining_tables: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dining_tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           city: string | null
