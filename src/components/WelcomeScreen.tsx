@@ -1,7 +1,18 @@
+import React, { useEffect } from 'react';
 import { LoadingSpinner } from "./LoadingSpinner";
+import { useNavigate } from 'react-router-dom';
 import safeDineLogo from "@/assets/safedine-logo.jpg";
 
 export const WelcomeScreen = () => {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/auth');
+    }, 3000); // 3 seconds loading
+    
+    return () => clearTimeout(timer);
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Background decoration */}
