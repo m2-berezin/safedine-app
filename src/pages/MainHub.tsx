@@ -49,9 +49,11 @@ interface OrderHistory {
 
 interface RestaurantVisit {
   id: string;
-  name: string;
-  visitDate: string;
-  tableNumber: string;
+  restaurant_id: string;
+  restaurant_name: string;
+  first_visit_at: string;
+  last_visit_at: string;
+  visit_count: number;
 }
 
 interface MenuItem {
@@ -237,6 +239,54 @@ const MainHub = () => {
     enabled: !!user?.id
   });
 
+  // Fetch user restaurant visits from database
+  const { data: userRestaurantVisits, refetch: refetchRestaurantVisits } = useQuery({
+    queryKey: ['user-restaurant-visits', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('restaurant_visits')
+        .select(`
+          id,
+          restaurant_id,
+          first_visit_at,
+          last_visit_at,
+          visit_count
+        `)
+        .eq('user_id', user.id)
+        .order('last_visit_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching restaurant visits:', error);
+        return [];
+      }
+      
+      // Fetch restaurant names separately
+      const visitData = await Promise.all(
+        data.map(async (visit) => {
+          const { data: restaurantData, error: restaurantError } = await supabase
+            .from('restaurants')
+            .select('name')
+            .eq('id', visit.restaurant_id)
+            .single();
+          
+          return {
+            id: visit.id,
+            restaurant_id: visit.restaurant_id,
+            restaurant_name: restaurantData?.name || 'Unknown Restaurant',
+            first_visit_at: visit.first_visit_at,
+            last_visit_at: visit.last_visit_at,
+            visit_count: visit.visit_count,
+          };
+        })
+      );
+      
+      return visitData;
+    },
+    enabled: !!user?.id
+  });
+
   // Set up auth state listener
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -288,12 +338,12 @@ const MainHub = () => {
     }
   }, [user?.id]);
 
-  // Update favorites when user favorites data loads
+  // Update restaurants when user restaurant visits data loads
   useEffect(() => {
-    if (user?.id && userFavoritesData) {
-      setFavourites(userFavoritesData);
+    if (user?.id && userRestaurantVisits) {
+      setRestaurants(userRestaurantVisits);
     }
-  }, [user?.id, userFavoritesData]);
+  }, [user?.id, userRestaurantVisits]);
 
   // Fallback query to find restaurant by name if no ID is stored
   const { data: restaurantByName } = useQuery({
@@ -591,6 +641,55 @@ const MainHub = () => {
       // Clear cart after successful order
       setCartItems([]);
       localStorage.removeItem("safedine.cart");
+
+      // Save restaurant visit for authenticated users
+      if (user?.id) {
+        try {
+          // First check if this is a new visit
+          const { data: existingVisit } = await supabase
+            .from('restaurant_visits')
+            .select('visit_count')
+            .eq('user_id', user.id)
+            .eq('restaurant_id', restaurantId)
+            .maybeSingle();
+          
+          if (existingVisit) {
+            // Update existing visit
+            const { error: visitError } = await supabase
+              .from('restaurant_visits')
+              .update({
+                last_visit_at: new Date().toISOString(),
+                visit_count: existingVisit.visit_count + 1
+              })
+              .eq('user_id', user.id)
+              .eq('restaurant_id', restaurantId);
+            
+            if (visitError) {
+              console.error('Error updating restaurant visit:', visitError);
+            }
+          } else {
+            // Create new visit record
+            const { error: visitError } = await supabase
+              .from('restaurant_visits')
+              .insert({
+                user_id: user.id,
+                restaurant_id: restaurantId,
+                first_visit_at: new Date().toISOString(),
+                last_visit_at: new Date().toISOString(),
+                visit_count: 1
+              });
+            
+            if (visitError) {
+              console.error('Error creating restaurant visit:', visitError);
+            }
+          }
+          
+          // Refetch restaurant visits to update the UI
+          refetchRestaurantVisits();
+        } catch (error) {
+          console.error('Error in restaurant visit logic:', error);
+        }
+      }
 
       toast({
         title: "Order Placed Successfully!",
@@ -1188,10 +1287,15 @@ const MainHub = () => {
                   <div className="space-y-3">
                     {restaurants.map((restaurant) => (
                       <div key={restaurant.id} className="p-3 bg-muted rounded-lg">
-                        <h4 className="font-medium">{restaurant.name}</h4>
+                        <h4 className="font-medium">{restaurant.restaurant_name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {restaurant.visitDate} • Table {restaurant.tableNumber}
+                          First visited: {new Date(restaurant.first_visit_at).toLocaleDateString()} • {restaurant.visit_count} visit{restaurant.visit_count !== 1 ? 's' : ''}
                         </p>
+                        {restaurant.visit_count > 1 && (
+                          <p className="text-xs text-muted-foreground">
+                            Last visit: {new Date(restaurant.last_visit_at).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>

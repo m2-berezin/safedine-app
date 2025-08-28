@@ -253,6 +253,39 @@ export type Database = {
         }
         Relationships: []
       }
+      restaurant_visits: {
+        Row: {
+          created_at: string
+          first_visit_at: string
+          id: string
+          last_visit_at: string
+          restaurant_id: string
+          updated_at: string
+          user_id: string
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          restaurant_id: string
+          updated_at?: string
+          user_id: string
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          restaurant_id?: string
+          updated_at?: string
+          user_id?: string
+          visit_count?: number
+        }
+        Relationships: []
+      }
       restaurants: {
         Row: {
           address: string
