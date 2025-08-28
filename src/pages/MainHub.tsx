@@ -1435,90 +1435,78 @@ const MainHub = () => {
                   Contact & Support
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Restaurant Contact Info */}
-                <div className="bg-muted rounded-lg p-3 space-y-2">
-                  <h4 className="font-medium text-sm">Restaurant Information</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3 w-3 text-primary" />
-                      <span className="text-muted-foreground">+44 1202 123 456</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-3 w-3 text-primary" />
-                      <span className="text-muted-foreground">hello@{restaurantName?.toLowerCase().replace(/\s+/g, '-') || 'restaurant'}.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3 w-3 text-primary" />
-                      <span className="text-muted-foreground">Daily: 10:00 AM - 10:00 PM</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-12 flex-col gap-1"
-                    onClick={() => {
-                      window.open('tel:+441202123456');
-                      toast({
-                        title: "Calling restaurant",
-                        description: "Connecting you now...",
-                      });
-                    }}
-                  >
-                    <Phone className="h-4 w-4" />
-                    <span className="text-xs">Call Now</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-12 flex-col gap-1"
-                    onClick={() => {
-                      toast({
-                        title: "Staff notified",
-                        description: "A team member will assist you at your table shortly.",
-                      });
-                    }}
-                  >
-                    <Bell className="h-4 w-4" />
-                    <span className="text-xs">Call Staff</span>
-                  </Button>
-                </div>
-
-                {/* Support Options */}
-                <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start" 
-                    size="sm"
-                    onClick={() => {
-                      toast({
-                        title: "Contact form",
-                        description: "Opening contact form...",
-                      });
-                    }}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start" 
-                    size="sm"
-                    onClick={() => {
-                      toast({
-                        title: "FAQs",
-                        description: "Common questions and answers",
-                      });
-                    }}
-                  >
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    Frequently Asked Questions
-                  </Button>
-                </div>
+              <CardContent className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => {
+                    window.open('tel:+441202123456');
+                    toast({
+                      title: "Calling Restaurant",
+                      description: `Connecting you to ${restaurantName || 'the restaurant'} at +44 1202 123 456`,
+                    });
+                  }}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Restaurant
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => {
+                    toast({
+                      title: "Contact Form",
+                      description: "Send us a message: help@safedine.com or use the form at safedine.com/contact",
+                    });
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contact Form
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => {
+                    toast({
+                      title: "Frequently Asked Questions",
+                      description: "Common questions: How to order, allergen info, payment methods, and more at safedine.com/faq",
+                    });
+                  }}
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  FAQs
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => {
+                    toast({
+                      title: "Privacy Policy",
+                      description: "We protect your data and never share personal information. Full policy: safedine.com/privacy",
+                    });
+                  }}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Privacy Policy
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  size="sm"
+                  onClick={() => {
+                    toast({
+                      title: "Terms & Conditions",
+                      description: "Usage terms and conditions. By using SafeDine, you agree to our terms: safedine.com/terms",
+                    });
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Terms & Conditions
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
