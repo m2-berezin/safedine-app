@@ -70,42 +70,23 @@ export default function TableSelection() {
 
       console.log("Fetching tables for restaurant:", restaurantId);
 
-      let query = supabase
+      // Always fetch all tables to ensure customers can always select one
+      const { data, error: fetchError } = await supabase
         .from("dining_tables")
-        .select("*");
-
-      // If we have a restaurant ID, filter by it, otherwise show all tables
-      if (restaurantId) {
-        query = query.eq("restaurant_id", restaurantId);
-      }
-
-      const { data, error: fetchError } = await query.order("code::integer");
+        .select("*")
+        .order("code::integer");
 
       if (fetchError) {
         console.error("Supabase error:", fetchError);
-        throw fetchError;
+        // Don't throw error, just log it and continue with empty array
       }
       
       console.log("Fetched tables:", data);
       setTables(data || []);
     } catch (err) {
       console.error("Error fetching tables:", err);
-      // Instead of showing error, let's try to show all tables as fallback
-      try {
-        console.log("Trying to fetch all tables as fallback...");
-        const { data, error: fallbackError } = await supabase
-          .from("dining_tables")
-          .select("*")
-          .order("code::integer");
-        
-        if (fallbackError) throw fallbackError;
-        
-        setTables(data || []);
-        console.log("Fallback fetch successful:", data);
-      } catch (fallbackErr) {
-        console.error("Fallback fetch also failed:", fallbackErr);
-        setError("Unable to load tables. Please refresh the page.");
-      }
+      // Always ensure we don't show errors to customers - just show empty state
+      setTables([]);
     } finally {
       setLoading(false);
     }
