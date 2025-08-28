@@ -499,6 +499,10 @@ const MainHub = () => {
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const handlePlaceOrder = async () => {
+    console.log('Starting order placement...');
+    console.log('User:', user?.id);
+    console.log('Cart items:', cartItems);
+    
     if (cartItems.length === 0) {
       toast({
         variant: "destructive",
@@ -510,6 +514,8 @@ const MainHub = () => {
 
     const tableId = localStorage.getItem("safedine.tableId");
     const tableCode = localStorage.getItem("safedine.tableCode");
+    
+    console.log('Table info:', { tableId, tableCode, restaurantId });
 
     if (!tableId || !tableCode) {
       toast({
@@ -520,22 +526,41 @@ const MainHub = () => {
       return;
     }
 
+    if (!restaurantId) {
+      toast({
+        variant: "destructive",
+        title: "Restaurant Information Missing",
+        description: "Restaurant information is required to place an order.",
+      });
+      return;
+    }
+
     try {
       const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
-      const { error } = await supabase
+      const orderData = {
+        user_id: user?.id || null,
+        restaurant_id: restaurantId,
+        table_id: tableId,
+        table_code: tableCode,
+        items: JSON.parse(JSON.stringify(cartItems)), // Convert to plain JSON
+        total_amount: totalAmount,
+        status: 'pending'
+      };
+      
+      console.log('Order data being sent:', orderData);
+      
+      const { error, data } = await supabase
         .from('orders')
-        .insert({
-          user_id: user?.id || null, // Allow null for guest users
-          restaurant_id: restaurantId,
-          table_id: tableId,
-          table_code: tableCode,
-          items: cartItems as any,
-          total_amount: totalAmount,
-          status: 'pending'
-        });
+        .insert(orderData)
+        .select();
 
-      if (error) throw error;
+      console.log('Supabase response:', { error, data });
+
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
 
       // Clear cart after successful order
       setCartItems([]);
@@ -552,12 +577,14 @@ const MainHub = () => {
       // Switch to profile tab to show order confirmation
       setActiveTab("profile");
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error placing order:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       toast({
         variant: "destructive",
         title: "Order Failed",
-        description: "Failed to place your order. Please try again.",
+        description: `Failed to place your order: ${error?.message || 'Unknown error'}. Please try again.`,
       });
     }
   };
