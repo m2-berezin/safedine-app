@@ -36,21 +36,21 @@ export default function ReviewStars({
         const isPartiallyFilled = starValue - 0.5 <= rating && rating < starValue;
         
         return (
-          <button
-            key={index}
-            type="button"
-            onClick={() => handleStarClick(starValue)}
-            disabled={!interactive}
-            className={cn(
-              sizeClasses[size],
-              interactive ? "cursor-pointer hover:scale-110 transition-transform" : "cursor-default",
-              "relative"
-            )}
-          >
+            <button
+              key={index}
+              type="button"
+              onClick={() => handleStarClick(starValue)}
+              disabled={!interactive}
+              className={cn(
+                sizeClasses[size],
+                interactive ? "cursor-pointer hover:scale-110 transition-all duration-200 hover:drop-shadow-md" : "cursor-default",
+                "relative"
+              )}
+            >
             <Star 
               className={cn(
-                "absolute inset-0",
-                isFilled || isPartiallyFilled ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                "absolute inset-0 transition-all duration-200",
+                isFilled || isPartiallyFilled ? "fill-amber-400 text-amber-400 drop-shadow-sm" : "text-muted-foreground hover:text-amber-300"
               )}
             />
             {isPartiallyFilled && (

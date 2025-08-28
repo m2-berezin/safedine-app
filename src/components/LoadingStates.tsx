@@ -17,11 +17,13 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
     <FadeInUp>
-      <div className={cn("text-center py-12", className)}>
-        <Icon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>
-        {action && <div className="flex justify-center">{action}</div>}
+      <div className={cn("text-center py-12 animate-fade-in", className)}>
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
+          <Icon className="h-8 w-8 text-muted-foreground opacity-50" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2 animate-fade-in-up">{title}</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto animate-stagger-2">{description}</p>
+        {action && <div className="flex justify-center animate-stagger-3">{action}</div>}
       </div>
     </FadeInUp>
   );
@@ -35,11 +37,11 @@ interface LoadingCardProps {
 
 export function LoadingCard({ title, description, className }: LoadingCardProps) {
   return (
-    <Card className={cn("shadow-soft", className)}>
+    <Card className={cn("shadow-soft animate-fade-in hover:shadow-medium transition-all duration-300", className)}>
       <CardContent className="flex flex-col items-center justify-center py-12">
         <LoadingSpinner size="lg" text={title || "Loading..."} />
         {description && (
-          <p className="text-sm text-muted-foreground mt-4 text-center max-w-md">
+          <p className="text-sm text-muted-foreground mt-4 text-center max-w-md animate-fade-in-up">
             {description}
           </p>
         )}
@@ -81,21 +83,21 @@ export function SkeletonGrid({ type, count = 3, className }: SkeletonGridProps) 
 // Enhanced loading spinner with pulsing dots
 export function DotLoadingSpinner({ text }: { text?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="flex flex-col items-center justify-center gap-4 animate-fade-in">
       <div className="flex space-x-1">
         {[0, 1, 2].map((index) => (
           <div
             key={index}
-            className="h-3 w-3 bg-primary rounded-full animate-bounce"
+            className="h-3 w-3 bg-primary rounded-full animate-bounce-gentle"
             style={{
               animationDelay: `${index * 0.1}s`,
-              animationDuration: "0.6s"
+              animationDuration: "0.8s"
             }}
           />
         ))}
       </div>
       {text && (
-        <p className="text-muted-foreground text-sm animate-pulse">{text}</p>
+        <p className="text-muted-foreground text-sm animate-pulse-slow">{text}</p>
       )}
     </div>
   );

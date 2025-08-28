@@ -109,17 +109,17 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
   };
 
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
+    <Card className="shadow-soft animate-fade-in hover:shadow-medium transition-all duration-300">
+      <CardHeader className="animate-fade-in-up">
         <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
+          <MessageSquare className="h-5 w-5 text-primary animate-pulse-slow" />
           Share Your Experience
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Overall Rating */}
-          <div className="space-y-3">
+          <div className="space-y-3 animate-stagger-1">
             <Label className="text-base font-medium">Overall Rating *</Label>
             <div className="flex items-center gap-3">
               <ReviewStars
@@ -135,22 +135,23 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
           </div>
 
           {/* Review Title */}
-          <div className="space-y-2">
+          <div className="space-y-2 animate-stagger-2">
             <Label htmlFor="title">Review Title</Label>
             <Input
               id="title"
               placeholder="Summarize your experience"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="transition-all duration-200 focus:scale-[1.01]"
             />
           </div>
 
           {/* Detailed Ratings */}
-          <div className="space-y-4">
+          <div className="space-y-4 animate-stagger-3">
             <Label className="text-base font-medium">Detailed Ratings</Label>
             
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-all duration-200">
                 <Label className="text-sm">Food Quality</Label>
                 <div className="flex items-center gap-2">
                   <ReviewStars
@@ -164,7 +165,7 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-all duration-200">
                 <Label className="text-sm">Service</Label>
                 <div className="flex items-center gap-2">
                   <ReviewStars
@@ -178,7 +179,7 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-all duration-200">
                 <Label className="text-sm">Atmosphere</Label>
                 <div className="flex items-center gap-2">
                   <ReviewStars
@@ -195,7 +196,7 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
           </div>
 
           {/* Visit Date */}
-          <div className="space-y-2">
+          <div className="space-y-2 animate-stagger-4">
             <Label htmlFor="visitDate" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Visit Date
@@ -206,11 +207,12 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
               value={formData.visitDate}
               onChange={(e) => setFormData(prev => ({ ...prev, visitDate: e.target.value }))}
               max={new Date().toISOString().split('T')[0]}
+              className="transition-all duration-200 focus:scale-[1.01]"
             />
           </div>
 
           {/* Comment */}
-          <div className="space-y-2">
+          <div className="space-y-2 animate-fade-in">
             <Label htmlFor="comment">Your Review</Label>
             <Textarea
               id="comment"
@@ -218,11 +220,12 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
               value={formData.comment}
               onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
               rows={4}
+              className="transition-all duration-200 focus:scale-[1.01]"
             />
           </div>
 
           {/* Recommendation */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 bg-muted rounded-lg animate-fade-in hover:bg-muted/80 transition-all duration-200">
             <Label htmlFor="recommend" className="text-base font-medium">
               Would you recommend this restaurant?
             </Label>
@@ -234,13 +237,23 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-4 animate-slide-up">
             <Button
               type="submit"
               disabled={isSubmitting || formData.rating === 0}
-              className="flex-1"
+              className="flex-1 hover:scale-105 transition-all duration-200 hover:shadow-lg"
             >
-              {isSubmitting ? "Submitting..." : "Submit Review"}
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4 mr-2" />
+                  Submit Review
+                </>
+              )}
             </Button>
             {onCancel && (
               <Button
@@ -248,6 +261,7 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSubmitting}
+                className="hover:scale-105 transition-all duration-200"
               >
                 Cancel
               </Button>

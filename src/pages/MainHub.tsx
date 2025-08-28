@@ -910,7 +910,7 @@ const MainHub = () => {
       {/* Main Content with Tabs */}
       <div className="px-4 pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsContent value="menu" className="mt-6 space-y-4">
+          <TabsContent value="menu" className="mt-6 space-y-4 animate-fade-in">
             {menusLoading ? (
               <LoadingCard title="Loading Menu..." description="Fetching your personalized safe menu based on dietary preferences" />
             ) : !menus || menus.length === 0 ? (
@@ -1128,7 +1128,7 @@ const MainHub = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="cart" className="mt-6 space-y-4">
+          <TabsContent value="cart" className="mt-6 space-y-4 animate-fade-in">
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1215,7 +1215,7 @@ const MainHub = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="orders" className="mt-6 space-y-4">
+          <TabsContent value="orders" className="mt-6 space-y-4 animate-fade-in">
             {/* Real-time Order Tracking */}
             <OrderTracking userId={user?.id} />
             
@@ -1231,7 +1231,7 @@ const MainHub = () => {
                       <button
                         key={order.id}
                         onClick={() => handleOrderClick(order)}
-                        className="w-full flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left"
+                        className="w-full flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-all duration-200 hover:scale-[1.01] hover:shadow-md text-left group"
                       >
                         <div>
                           <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
@@ -1293,7 +1293,7 @@ const MainHub = () => {
                       });
                       
                       return favouriteItems.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                        <div key={item.id} className="flex items-center justify-between p-4 bg-muted rounded-lg shadow-soft hover:shadow-medium transition-all duration-200 hover:scale-[1.01] animate-fade-in">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-medium">{item.name}</h4>
@@ -1355,7 +1355,7 @@ const MainHub = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="profile" className="mt-6 space-y-4">
+          <TabsContent value="profile" className="mt-6 space-y-4 animate-fade-in">
             {/* Profile Summary */}
             <Card className="shadow-soft">
               <CardHeader>

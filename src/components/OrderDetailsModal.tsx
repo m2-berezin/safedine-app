@@ -87,8 +87,8 @@ export default function OrderDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        <DialogHeader className="animate-fade-in">
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />
             Order Details
@@ -97,7 +97,7 @@ export default function OrderDetailsModal({
 
         <div className="space-y-6">
           {/* Order Header */}
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div>
@@ -117,14 +117,14 @@ export default function OrderDetailsModal({
                     </span>
                   </div>
                 </div>
-                <Badge className={getStatusColor(order.status)}>
+                <Badge className={`${getStatusColor(order.status)} animate-bounce-gentle`}>
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-right">
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-2xl font-bold text-primary animate-fade-in-up">
                   £{Number(order.total_amount).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -135,16 +135,16 @@ export default function OrderDetailsModal({
           </Card>
 
           {/* Order Items */}
-          <Card>
+          <Card className="animate-stagger-2">
             <CardHeader>
               <CardTitle className="text-base">Items Ordered</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {Array.isArray(order.items) && order.items.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between py-2">
+                  <div key={index} className={`flex items-center justify-between py-2 animate-stagger-${Math.min(index + 1, 4)} hover:bg-muted/50 rounded-lg px-2 transition-all duration-200`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary animate-bounce-gentle">
                         {item.quantity}
                       </div>
                       <div>
@@ -160,7 +160,7 @@ export default function OrderDetailsModal({
                 
                 <Separator />
                 
-                <div className="flex justify-between items-center font-semibold text-lg">
+                <div className="flex justify-between items-center font-semibold text-lg animate-fade-in-up">
                   <span>Total</span>
                   <span>£{Number(order.total_amount).toFixed(2)}</span>
                 </div>
@@ -170,17 +170,17 @@ export default function OrderDetailsModal({
 
           {/* Review Section */}
           {order.status === 'completed' && currentUserId && (
-            <Card>
+            <Card className="animate-stagger-3">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Star className="h-5 w-5 text-primary" />
+                  <Star className="h-5 w-5 text-primary animate-pulse-slow" />
                   Share Your Experience
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {hasReviewed ? (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="text-center py-6 animate-scale-in">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
                       <MessageSquare className="h-8 w-8 text-green-600" />
                     </div>
                     <h4 className="font-semibold mb-2">Thank you for your review!</h4>
@@ -189,24 +189,25 @@ export default function OrderDetailsModal({
                     </p>
                   </div>
                 ) : !showReviewForm ? (
-                  <div className="text-center py-6">
-                    <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <div className="text-center py-6 animate-fade-in">
+                    <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50 animate-pulse-slow" />
                     <h4 className="font-semibold mb-2">How was your experience?</h4>
                     <p className="text-muted-foreground text-sm mb-4">
                       Share your feedback about this order to help others and improve service.
                     </p>
-                    <Button onClick={() => setShowReviewForm(true)} className="w-full">
+                    <Button onClick={() => setShowReviewForm(true)} className="w-full hover:scale-105 transition-all duration-200 hover:shadow-lg">
                       <Star className="h-4 w-4 mr-2" />
                       Write a Review
                     </Button>
                   </div>
                 ) : (
-                  <div>
+                  <div className="animate-slide-in-left">
                     <div className="flex items-center gap-2 mb-4">
                       <Button 
                         variant="ghost" 
                         size="sm"
                         onClick={() => setShowReviewForm(false)}
+                        className="hover:scale-105 transition-transform duration-150"
                       >
                         <ChevronLeft className="h-4 w-4" />
                         Back

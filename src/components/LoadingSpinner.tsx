@@ -23,10 +23,10 @@ export const LoadingSpinner = ({ size = "md", className, text }: LoadingSpinnerP
   };
 
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-2", className)}>
+    <div className={cn("flex flex-col items-center justify-center gap-2 animate-fade-in", className)}>
       <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
       {text && (
-        <p className={cn("text-muted-foreground animate-pulse", textSizeClasses[size])}>
+        <p className={cn("text-muted-foreground animate-pulse-slow", textSizeClasses[size])}>
           {text}
         </p>
       )}
