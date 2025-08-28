@@ -39,10 +39,12 @@ interface CartItem {
 
 interface OrderHistory {
   id: string;
-  date: string;
-  restaurant: string;
-  items: string[];
-  total: number;
+  created_at: string;
+  restaurant_id: string;
+  table_code: string;
+  items: CartItem[];
+  total_amount: number;
+  status: string;
 }
 
 interface RestaurantVisit {
@@ -201,6 +203,36 @@ const MainHub = () => {
       }
       
       return data.map(fav => fav.menu_item_id);
+    },
+    enabled: !!user?.id
+  });
+
+  // Fetch user order history from database
+  const { data: userOrderHistory, refetch: refetchOrders } = useQuery({
+    queryKey: ['user-orders', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          created_at,
+          restaurant_id,
+          table_code,
+          items,
+          total_amount,
+          status
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching order history:', error);
+        return [];
+      }
+      
+      return data;
     },
     enabled: !!user?.id
   });
@@ -523,8 +555,8 @@ const MainHub = () => {
         description: `Your order has been sent to Table ${tableCode}. Total: £${totalAmount.toFixed(2)}`,
       });
 
-      // Switch to profile tab to potentially show order history
-      setActiveTab("profile");
+      // Refetch order history to show the new order
+      refetchOrders();
 
     } catch (error) {
       console.error('Error placing order:', error);
@@ -1044,7 +1076,13 @@ const MainHub = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {orderHistory.length === 0 ? (
+                {!user?.id ? (
+                  <EmptyState
+                    icon={Clock}
+                    title="Sign in to see your orders"
+                    description="Create an account to track your order history across visits."
+                  />
+                ) : (!userOrderHistory || userOrderHistory.length === 0) ? (
                   <EmptyState
                     icon={Clock}
                     title="No past orders found"
@@ -1052,18 +1090,28 @@ const MainHub = () => {
                   />
                 ) : (
                   <div className="space-y-3">
-                    {orderHistory.map((order) => (
+                    {userOrderHistory.map((order) => (
                       <div key={order.id} className="p-3 bg-muted rounded-lg">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h4 className="font-medium">{order.restaurant}</h4>
-                            <p className="text-sm text-muted-foreground">{order.date}</p>
+                            <h4 className="font-medium">Table {order.table_code}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <Badge variant="outline" className="text-xs mt-1">
+                              {order.status}
+                            </Badge>
                           </div>
-                          <p className="font-semibold">£{order.total.toFixed(2)}</p>
+                          <p className="font-semibold">£{order.total_amount.toFixed(2)}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {order.items.join(", ")}
-                        </p>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {Array.isArray(order.items) && (order.items as unknown as CartItem[]).map((item: CartItem, index: number) => (
+                            <span key={index}>
+                              {item.quantity}x {item.name}
+                              {index < (order.items as unknown as CartItem[]).length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </div>
                         <Button size="sm" variant="outline">
                           Reorder
                         </Button>
