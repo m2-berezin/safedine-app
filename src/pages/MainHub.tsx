@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { 
   Menu, 
   ShoppingCart, 
@@ -27,7 +29,14 @@ import {
   Plus,
   Star,
   Minus,
-  Trash2
+  Trash2,
+  Moon,
+  Sun,
+  LogOut,
+  Edit,
+  Mail,
+  Globe,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -105,6 +114,13 @@ const MainHub = () => {
     allergens: string[];
     diets: string[];
   }>({ allergens: [], diets: [] });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appSettings, setAppSettings] = useState({
+    darkMode: false,
+    notifications: true,
+    emailNotifications: true,
+    language: 'English'
+  });
 
   // Fetch restaurant data
   const { data: restaurantData } = useQuery({
@@ -316,11 +332,13 @@ const MainHub = () => {
     const savedRestaurantName = localStorage.getItem("safedine.restaurantName");
     const savedTableCode = localStorage.getItem("safedine.tableCode");
     const savedPreferences = localStorage.getItem("safedine.preferences");
+    const savedAppSettings = localStorage.getItem("safedine.appSettings");
 
     if (savedCart) setCartItems(JSON.parse(savedCart));
     if (savedHistory) setOrderHistory(JSON.parse(savedHistory));
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
     if (savedPreferences) setUserPreferences(JSON.parse(savedPreferences));
+    if (savedAppSettings) setAppSettings(JSON.parse(savedAppSettings));
     
     // Set restaurant ID and table
     if (savedRestaurantId) {
@@ -574,6 +592,55 @@ const MainHub = () => {
       title: "Items Added to Cart",
       description: `${itemCount} item${itemCount !== 1 ? 's' : ''} from your previous order have been added to your cart.`,
     });
+  };
+
+  const handleSettingChange = (setting: string, value: boolean | string) => {
+    setAppSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+    
+    // Save to localStorage
+    const newSettings = { ...appSettings, [setting]: value };
+    localStorage.setItem("safedine.appSettings", JSON.stringify(newSettings));
+    
+    // Apply dark mode immediately (if implemented)
+    if (setting === 'darkMode') {
+      // This would integrate with your theme provider
+      toast({
+        title: value ? "Dark mode enabled" : "Light mode enabled",
+        description: "App theme updated successfully.",
+      });
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Clear local data
+      localStorage.removeItem("safedine.cart");
+      localStorage.removeItem("safedine.favourites");
+      localStorage.removeItem("safedine.appSettings");
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+      
+      // Navigate to auth or home page
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Sign out failed",
+        description: error.message || "Failed to sign out. Please try again.",
+      });
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -1339,8 +1406,8 @@ const MainHub = () => {
                   <p className="text-sm font-medium">Notifications</p>
                 </CardContent>
               </Card>
-              <Card className="shadow-soft">
-                <CardContent className="p-4 text-center">
+              <Card className="shadow-soft cursor-pointer" onClick={() => setSettingsOpen(true)}>
+                <CardContent className="p-4 text-center hover:bg-primary/5 transition-colors">
                   <Settings className="h-8 w-8 text-primary mx-auto mb-2" />
                   <p className="text-sm font-medium">Settings</p>
                 </CardContent>
@@ -1439,6 +1506,151 @@ const MainHub = () => {
           </button>
         </div>
       </div>
+
+      {/* Settings Sheet */}
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Settings
+            </SheetTitle>
+          </SheetHeader>
+          
+          <div className="mt-6 space-y-6">
+            {/* Profile Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Profile</h3>
+              
+              <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src="/avatar-placeholder.png" />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {user?.email?.charAt(0).toUpperCase() || 'G'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium">{user?.email || 'Guest User'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {user ? 'Signed in' : 'Anonymous user'}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-between"
+                onClick={() => {
+                  setSettingsOpen(false);
+                  navigate("/allergen-preferences");
+                }}
+              >
+                <span className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Dietary Preferences
+                </span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Separator />
+
+            {/* App Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">App Preferences</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {appSettings.darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    <span>Dark Mode</span>
+                  </div>
+                  <Switch
+                    checked={appSettings.darkMode}
+                    onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    <span>Push Notifications</span>
+                  </div>
+                  <Switch
+                    checked={appSettings.notifications}
+                    onCheckedChange={(checked) => handleSettingChange('notifications', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span>Email Notifications</span>
+                  </div>
+                  <Switch
+                    checked={appSettings.emailNotifications}
+                    onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    <span>Language</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{appSettings.language}</span>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Account Actions */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Account</h3>
+              
+              <div className="space-y-2">
+                <Button variant="outline" className="w-full justify-start">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Privacy Policy
+                </Button>
+                
+                <Button variant="outline" className="w-full justify-start">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Terms of Service
+                </Button>
+                
+                <Button variant="outline" className="w-full justify-start">
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  Help & Support
+                </Button>
+              </div>
+              
+              {user && (
+                <div className="pt-4">
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* App Info */}
+            <div className="pt-4 text-center text-sm text-muted-foreground">
+              <p>SafeDine v1.0.0</p>
+              <p>© 2024 SafeDine. All rights reserved.</p>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
