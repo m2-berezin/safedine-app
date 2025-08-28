@@ -255,11 +255,26 @@ const MainHub = () => {
       item.allergens.includes(allergen)
     );
     
-    // Check dietary preferences - if user has dietary restrictions, 
-    // the item must match at least one of them OR have no dietary info (assume safe)
-    const matchesDietaryPrefs = userPreferences.diets.length === 0 || 
-      userPreferences.diets.some(diet => item.dietary_info.includes(diet)) ||
-      item.dietary_info.length === 0;
+    // Check dietary preferences
+    let matchesDietaryPrefs = true;
+    
+    if (userPreferences.diets.length > 0) {
+      const hasVegan = userPreferences.diets.includes('VG');
+      const hasVegetarian = userPreferences.diets.includes('V');
+      const itemHasV = item.dietary_info.includes('V');
+      const itemHasVG = item.dietary_info.includes('VG');
+      const itemHasD = item.dietary_info.includes('D');
+      const hasNeitherVNorVG = !itemHasV && !itemHasVG;
+      
+      if (hasVegan) {
+        // Vegans can see items with VG symbol OR items with neither V nor VG symbols
+        // BUT NOT items with D (dairy) symbol
+        matchesDietaryPrefs = (itemHasVG || hasNeitherVNorVG) && !itemHasD;
+      } else if (hasVegetarian) {
+        // Vegetarians can see items with V or VG symbols OR items with neither V nor VG symbols
+        matchesDietaryPrefs = itemHasV || itemHasVG || hasNeitherVNorVG;
+      }
+    }
     
     return !hasAllergens && matchesDietaryPrefs;
   };
