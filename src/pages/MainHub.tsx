@@ -646,7 +646,7 @@ const MainHub = () => {
 
     try {
       // Call the delete user RPC function
-      const { error } = await supabase.rpc('delete_user');
+      const { error } = await supabase.rpc('delete_user' as any);
       
       if (error) {
         throw error;
