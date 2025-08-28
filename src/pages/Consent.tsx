@@ -16,15 +16,15 @@ export default function Consent() {
   useEffect(() => {
     const consentAccepted = localStorage.getItem('safedine.consentAccepted');
     if (consentAccepted === 'true') {
-      // Auto-skip to allergen selection page
-      navigate('/allergen-selection'); // Note: This page needs to be created
+      // Auto-skip to allergen preferences page
+      navigate('/allergen-preferences');
     }
   }, [navigate]);
 
   const handleAgreeAndContinue = () => {
     if (isChecked) {
       localStorage.setItem('safedine.consentAccepted', 'true');
-      navigate('/allergen-selection'); // Note: This page needs to be created
+      navigate('/allergen-preferences');
     }
   };
 
