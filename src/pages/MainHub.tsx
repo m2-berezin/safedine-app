@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Json } from "@/integrations/supabase/types";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,11 +117,11 @@ const MainHub = () => {
   }>({ allergens: [], diets: [] });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appSettings, setAppSettings] = useState({
-    darkMode: false,
     notifications: true,
     emailNotifications: true,
     language: 'English'
   });
+  const { theme, toggleTheme } = useTheme();
 
   // Fetch restaurant data
   const { data: restaurantData } = useQuery({
@@ -338,7 +339,12 @@ const MainHub = () => {
     if (savedHistory) setOrderHistory(JSON.parse(savedHistory));
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
     if (savedPreferences) setUserPreferences(JSON.parse(savedPreferences));
-    if (savedAppSettings) setAppSettings(JSON.parse(savedAppSettings));
+    if (savedAppSettings) {
+      const settings = JSON.parse(savedAppSettings);
+      // Remove darkMode from settings since it's handled by theme context
+      const { darkMode, ...filteredSettings } = settings;
+      setAppSettings(filteredSettings);
+    }
     
     // Set restaurant ID and table
     if (savedRestaurantId) {
@@ -604,14 +610,21 @@ const MainHub = () => {
     const newSettings = { ...appSettings, [setting]: value };
     localStorage.setItem("safedine.appSettings", JSON.stringify(newSettings));
     
-    // Apply dark mode immediately (if implemented)
-    if (setting === 'darkMode') {
-      // This would integrate with your theme provider
+    // Handle specific settings
+    if (setting === 'notifications' || setting === 'emailNotifications') {
       toast({
-        title: value ? "Dark mode enabled" : "Light mode enabled",
-        description: "App theme updated successfully.",
+        title: `${setting === 'notifications' ? 'Push' : 'Email'} notifications ${value ? 'enabled' : 'disabled'}`,
+        description: "Your notification preferences have been updated.",
       });
     }
+  };
+
+  const handleDarkModeToggle = () => {
+    toggleTheme();
+    toast({
+      title: theme === 'light' ? "Dark mode enabled" : "Light mode enabled",
+      description: "App theme updated successfully.",
+    });
   };
 
   const handleSignOut = async () => {
@@ -1565,12 +1578,12 @@ const MainHub = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {appSettings.darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                    {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                     <span>Dark Mode</span>
                   </div>
                   <Switch
-                    checked={appSettings.darkMode}
-                    onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
+                    checked={theme === 'dark'}
+                    onCheckedChange={handleDarkModeToggle}
                   />
                 </div>
                 
