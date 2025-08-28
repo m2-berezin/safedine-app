@@ -112,10 +112,14 @@ const MainHub = () => {
     enabled: !!restaurantId
   });
 
-  const { data: menus, isLoading: menusLoading } = useQuery({
+  const { data: menus, isLoading: menusLoading, error: menusError } = useQuery({
     queryKey: ['menus', restaurantId],
     queryFn: async () => {
-      if (!restaurantId) return [];
+      console.log('Fetching menus for restaurant ID:', restaurantId);
+      if (!restaurantId) {
+        console.log('No restaurant ID provided');
+        return [];
+      }
       
       const { data, error } = await supabase
         .from('menus')
@@ -148,10 +152,14 @@ const MainHub = () => {
         .eq('is_active', true)
         .order('display_order');
       
-      if (error) throw error;
+      console.log('Menu query result:', { data, error });
+      if (error) {
+        console.error('Menu fetch error:', error);
+        throw error;
+      }
       
       // Transform the data to match our interface
-      return data.map(menu => ({
+      const transformedMenus = data.map(menu => ({
         ...menu,
         categories: menu.menu_categories
           .sort((a, b) => a.display_order - b.display_order)
@@ -162,6 +170,9 @@ const MainHub = () => {
               .sort((a, b) => a.name.localeCompare(b.name))
           }))
       })) as MenuType[];
+      
+      console.log('Transformed menus:', transformedMenus);
+      return transformedMenus;
     },
     enabled: !!restaurantId
   });
@@ -379,20 +390,31 @@ const MainHub = () => {
                       title="Menu Coming Soon"
                       description="Your personalized safe menu will appear here based on your dietary preferences."
                     />
-                    {/* Debug button for testing */}
-                    <div className="mt-4 pt-4 border-t">
-                      <Button 
-                        variant="outline"
-                        onClick={() => {
-                          // Set The Real Greek restaurant for testing
-                          localStorage.setItem("safedine.restaurantId", "48aec4e3-47c8-4829-86a8-e6424fc446c8");
-                          localStorage.setItem("safedine.restaurantName", "The Real Greek");
-                          window.location.reload();
-                        }}
-                        className="w-full"
-                      >
-                        Test with The Real Greek Menu
-                      </Button>
+                    {/* Debug info for troubleshooting */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-1">
+                        <p><strong>Debug Info:</strong></p>
+                        <p>Restaurant ID: {restaurantId || "Not set"}</p>
+                        <p>Restaurant Name: {restaurantName || "Not set"}</p>
+                        <p>Menus Loading: {menusLoading ? "Yes" : "No"}</p>
+                        <p>Menus Found: {menus?.length || 0}</p>
+                        <p>Menu Error: {menusError ? String(menusError) : "None"}</p>
+                        {localStorage.getItem("safedine.restaurantId") && (
+                          <p>LocalStorage ID: {localStorage.getItem("safedine.restaurantId")}</p>
+                        )}
+                      </div>
+                    )}
+                    {/* Always show debug info for now */}
+                    <div className="mt-4 p-3 bg-muted rounded-lg text-xs space-y-1">
+                      <p><strong>Debug Info:</strong></p>
+                      <p>Restaurant ID: {restaurantId || "Not set"}</p>
+                      <p>Restaurant Name: {restaurantName || "Not set"}</p>
+                      <p>Menus Loading: {menusLoading ? "Yes" : "No"}</p>
+                      <p>Menus Found: {menus?.length || 0}</p>
+                      <p>Menu Error: {menusError ? String(menusError) : "None"}</p>
+                      {localStorage.getItem("safedine.restaurantId") && (
+                        <p>LocalStorage ID: {localStorage.getItem("safedine.restaurantId")}</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
