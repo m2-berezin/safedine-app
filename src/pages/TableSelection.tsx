@@ -51,17 +51,27 @@ export default function TableSelection() {
     try {
       setLoading(true);
 
-      console.log("Fetching tables for restaurant:", restaurantId);
+      console.log("Fetching tables for restaurant:", restaurantName);
 
-      // Always fetch all tables to ensure customers can always select one
+      // Filter tables by restaurant name using a join query
       const { data, error: fetchError } = await supabase
         .from("dining_tables")
-        .select("*")
+        .select(`
+          *,
+          restaurants!inner(name)
+        `)
+        .eq("restaurants.name", restaurantName || "")
         .order("code::integer");
 
       if (fetchError) {
         console.error("Supabase error:", fetchError);
-        // Don't throw error, just log it and continue with empty array
+        // If filtering by name fails, show all tables as fallback
+        const { data: allTables } = await supabase
+          .from("dining_tables")
+          .select("*")
+          .order("code::integer");
+        setTables(allTables || []);
+        return;
       }
       
       console.log("Fetched tables:", data);
