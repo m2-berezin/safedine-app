@@ -1483,12 +1483,7 @@ const MainHub = () => {
                   variant="outline" 
                   className="w-full justify-start" 
                   size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Privacy Policy",
-                      description: "We protect your data and never share personal information. Full policy: safedine.com/privacy",
-                    });
-                  }}
+                  onClick={() => navigate("/privacy-policy")}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Privacy Policy
@@ -1497,12 +1492,7 @@ const MainHub = () => {
                   variant="outline" 
                   className="w-full justify-start" 
                   size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Terms & Conditions",
-                      description: "Usage terms and conditions. By using SafeDine, you agree to our terms: safedine.com/terms",
-                    });
-                  }}
+                  onClick={() => navigate("/terms-and-conditions")}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Terms & Conditions
