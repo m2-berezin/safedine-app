@@ -337,6 +337,7 @@ export type Database = {
           id: string
           items: Json
           notes: string | null
+          order_token: string | null
           restaurant_id: string
           status: string
           table_code: string
@@ -351,6 +352,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          order_token?: string | null
           restaurant_id: string
           status?: string
           table_code: string
@@ -365,6 +367,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          order_token?: string | null
           restaurant_id?: string
           status?: string
           table_code?: string

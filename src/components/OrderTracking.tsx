@@ -21,6 +21,7 @@ interface Order {
   table_code: string;
   table_id: string;
   user_id: string | null;
+  order_token?: string | null;
 }
 
 interface OrderTrackingProps {

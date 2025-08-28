@@ -48,6 +48,8 @@ import FadeInUp from "@/components/animations/FadeInUp";
 import { LoadingCard, SkeletonGrid, EmptyState } from "@/components/LoadingStates";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
 import LoyaltyProgram from "@/components/LoyaltyProgram";
+import { generateOrderToken, storeGuestOrderToken } from "@/lib/orderToken";
+import { fetchUserOrders } from "@/lib/orderService";
 
 interface CartItem {
   id: string;
@@ -238,34 +240,12 @@ const MainHub = () => {
     enabled: !!user?.id
   });
 
-  // Fetch user order history from database
+  // Fetch user order history from database (works for both authenticated users and guests)
   const { data: userOrderHistory, refetch: refetchOrders } = useQuery({
     queryKey: ['user-orders', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          id,
-          created_at,
-          restaurant_id,
-          table_code,
-          items,
-          total_amount,
-          status
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching order history:', error);
-        return [];
-      }
-      
-      return data;
-    },
-    enabled: !!user?.id
+      return fetchUserOrders(user?.id || null);
+    }
   });
 
   // Fetch user restaurant visits from database
@@ -753,6 +733,9 @@ const MainHub = () => {
       
       const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
+      // Generate order token for guest orders
+      const orderToken = user?.id ? null : generateOrderToken();
+      
       const orderData = {
         user_id: user?.id || null,
         restaurant_id: restaurantId,
@@ -760,7 +743,8 @@ const MainHub = () => {
         table_code: tableCode,
         items: JSON.parse(JSON.stringify(cartItems)), // Convert to plain JSON
         total_amount: totalAmount,
-        status: 'pending'
+        status: 'pending',
+        order_token: orderToken
       };
       
       console.log('Order data being sent:', orderData);
@@ -775,6 +759,11 @@ const MainHub = () => {
       if (error) {
         console.error('Supabase error details:', error);
         throw error;
+      }
+
+      // Store guest order token for future access
+      if (orderToken && data && data[0]) {
+        storeGuestOrderToken(data[0].id, orderToken);
       }
 
       // Clear cart after successful order

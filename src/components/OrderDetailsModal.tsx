@@ -31,6 +31,7 @@ interface OrderDetailsProps {
   items: any; // Changed from OrderItem[] to any to match Json type
   total_amount: number;
   status: string;
+  order_token?: string | null;
 }
 
 interface OrderDetailsModalProps {
