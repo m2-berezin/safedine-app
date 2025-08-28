@@ -263,13 +263,19 @@ const MainHub = () => {
       const hasVegetarian = userPreferences.diets.includes('V');
       const itemHasV = item.dietary_info.includes('V');
       const itemHasVG = item.dietary_info.includes('VG');
-      const itemHasDairy = item.allergens.includes('D'); // Check allergens for dairy
+      
+      // Animal-derived allergens that vegans cannot have
+      const animalAllergens = ['D', 'E', 'M']; // Dairy, Eggs, Mollusks
+      const itemHasAnimalProducts = item.allergens.some(allergen => 
+        animalAllergens.includes(allergen)
+      );
+      
       const hasNeitherVNorVG = !itemHasV && !itemHasVG;
       
       if (hasVegan) {
         // Vegans can see items with VG symbol OR items with neither V nor VG symbols
-        // BUT NOT items with D (dairy) allergen
-        matchesDietaryPrefs = (itemHasVG || hasNeitherVNorVG) && !itemHasDairy;
+        // BUT NOT items with any animal-derived allergens
+        matchesDietaryPrefs = (itemHasVG || hasNeitherVNorVG) && !itemHasAnimalProducts;
       } else if (hasVegetarian) {
         // Vegetarians can see items with V or VG symbols OR items with neither V nor VG symbols
         matchesDietaryPrefs = itemHasV || itemHasVG || hasNeitherVNorVG;
