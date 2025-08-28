@@ -100,7 +100,8 @@ export default function ContactForm() {
             variant="ghost"
             size="icon"
             onClick={() => navigate(-1)}
-            className="shrink-0"
+            className="shrink-0 hover:bg-primary/10 transition-colors"
+            aria-label="Go back to previous page"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
