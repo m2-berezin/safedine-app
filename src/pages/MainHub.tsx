@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,15 +48,122 @@ interface RestaurantVisit {
   tableNumber: string;
 }
 
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  allergens: string[];
+  dietary_info: string[];
+  is_popular: boolean;
+  preparation_time?: number;
+  calories?: number;
+  spice_level?: number;
+  is_available: boolean;
+}
+
+interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string;
+  display_order: number;
+  items: MenuItem[];
+}
+
+interface MenuType {
+  id: string;
+  name: string;
+  description?: string;
+  display_order: number;
+  categories: MenuCategory[];
+}
+
 const MainHub = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("menu");
+  const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favourites, setFavourites] = useState<string[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantVisit[]>([]);
   const [restaurantName, setRestaurantName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
+  const [userPreferences, setUserPreferences] = useState<{
+    allergens: string[];
+    diets: string[];
+  }>({ allergens: [], diets: [] });
+
+  // Fetch restaurant and menu data
+  const { data: restaurantData } = useQuery({
+    queryKey: ['restaurant', restaurantName],
+    queryFn: async () => {
+      if (!restaurantName || restaurantName === "Acropolis Taverna") return null;
+      
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, address')
+        .eq('name', restaurantName)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!restaurantName && restaurantName !== "Acropolis Taverna"
+  });
+
+  const { data: menus, isLoading: menusLoading } = useQuery({
+    queryKey: ['menus', restaurantData?.id],
+    queryFn: async () => {
+      if (!restaurantData?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('menus')
+        .select(`
+          id,
+          name,
+          description,
+          display_order,
+          menu_categories(
+            id,
+            name,
+            description,
+            display_order,
+            menu_items(
+              id,
+              name,
+              description,
+              price,
+              allergens,
+              dietary_info,
+              is_popular,
+              preparation_time,
+              calories,
+              spice_level,
+              is_available
+            )
+          )
+        `)
+        .eq('restaurant_id', restaurantData.id)
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (error) throw error;
+      
+      // Transform the data to match our interface
+      return data.map(menu => ({
+        ...menu,
+        categories: menu.menu_categories
+          .sort((a, b) => a.display_order - b.display_order)
+          .map(category => ({
+            ...category,
+            items: category.menu_items
+              .filter(item => item.is_available)
+              .sort((a, b) => a.name.localeCompare(b.name))
+          }))
+      })) as MenuType[];
+    },
+    enabled: !!restaurantData?.id
+  });
 
   useEffect(() => {
     // Load data from localStorage
@@ -64,16 +173,76 @@ const MainHub = () => {
     const savedRestaurants = localStorage.getItem("safedine.restaurants");
     const savedRestaurantName = localStorage.getItem("safedine.restaurantName");
     const savedTableCode = localStorage.getItem("safedine.tableCode");
+    const savedPreferences = localStorage.getItem("safedine.preferences");
 
     if (savedCart) setCartItems(JSON.parse(savedCart));
     if (savedFavourites) setFavourites(JSON.parse(savedFavourites));
     if (savedHistory) setOrderHistory(JSON.parse(savedHistory));
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
+    if (savedPreferences) setUserPreferences(JSON.parse(savedPreferences));
     
-    // Set restaurant name and table - in a real app this would come from API
+    // Set restaurant name and table
     setRestaurantName(savedRestaurantName || "Acropolis Taverna");
     setTableNumber(savedTableCode || "Unknown");
   }, []);
+
+  useEffect(() => {
+    // Set first menu as default when menus load
+    if (menus && menus.length > 0 && !selectedMenu) {
+      setSelectedMenu(menus[0].id);
+    }
+  }, [menus, selectedMenu]);
+
+  // Helper functions
+  const isItemSafeForUser = (item: MenuItem) => {
+    // Check if item contains any allergens the user wants to avoid
+    const hasAllergens = userPreferences.allergens.some(allergen => 
+      item.allergens.includes(allergen)
+    );
+    
+    // Check dietary preferences - if user has dietary restrictions, 
+    // the item must match at least one of them OR have no dietary info (assume safe)
+    const matchesDietaryPrefs = userPreferences.diets.length === 0 || 
+      userPreferences.diets.some(diet => item.dietary_info.includes(diet)) ||
+      item.dietary_info.length === 0;
+    
+    return !hasAllergens && matchesDietaryPrefs;
+  };
+
+  const addToCart = (item: MenuItem) => {
+    const existingItem = cartItems.find(cartItem => cartItem.id === item.id);
+    
+    if (existingItem) {
+      const updatedCart = cartItems.map(cartItem =>
+        cartItem.id === item.id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      );
+      setCartItems(updatedCart);
+      localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
+    } else {
+      const newCartItem: CartItem = {
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1
+      };
+      const updatedCart = [...cartItems, newCartItem];
+      setCartItems(updatedCart);
+      localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
+    }
+  };
+
+  const toggleFavourite = (itemId: string) => {
+    const updatedFavourites = favourites.includes(itemId)
+      ? favourites.filter(id => id !== itemId)
+      : [...favourites, itemId];
+    
+    setFavourites(updatedFavourites);
+    localStorage.setItem("safedine.favourites", JSON.stringify(updatedFavourites));
+  };
+
+  const currentMenu = menus?.find(menu => menu.id === selectedMenu);
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -136,21 +305,209 @@ const MainHub = () => {
       <div className="px-4 pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="menu" className="mt-6 space-y-4">
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Menu className="h-5 w-5 text-primary" />
-                  Menu (Safe for You)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <EmptyState
-                  icon={Menu}
-                  title="Menu Coming Soon"
-                  description="Your personalized safe menu will appear here based on your dietary preferences."
-                />
-              </CardContent>
-            </Card>
+            {menusLoading ? (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Menu className="h-5 w-5 text-primary" />
+                    Loading Menu...
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-4 bg-muted rounded w-1/2"></div>
+                    <div className="h-4 bg-muted rounded w-5/6"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : !menus || menus.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Menu className="h-5 w-5 text-primary" />
+                    Menu (Safe for You)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EmptyState
+                    icon={Menu}
+                    title="Menu Coming Soon"
+                    description="Your personalized safe menu will appear here based on your dietary preferences."
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Menu Type Selector */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {menus.map((menu) => (
+                    <Button
+                      key={menu.id}
+                      variant={selectedMenu === menu.id ? "default" : "outline"}
+                      size="sm"
+                      className="whitespace-nowrap"
+                      onClick={() => setSelectedMenu(menu.id)}
+                    >
+                      {menu.name}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Current Menu Content */}
+                {currentMenu && (
+                  <div className="space-y-6">
+                    {/* Menu Header */}
+                    <Card className="shadow-soft">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Menu className="h-5 w-5 text-primary" />
+                          {currentMenu.name} Menu
+                        </CardTitle>
+                        {currentMenu.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {currentMenu.description}
+                          </p>
+                        )}
+                        {userPreferences.allergens.length > 0 && (
+                          <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                            <Shield className="h-4 w-4 text-primary" />
+                            <p className="text-sm text-primary font-medium">
+                              Filtering out: {userPreferences.allergens.join(", ")}
+                            </p>
+                          </div>
+                        )}
+                      </CardHeader>
+                    </Card>
+
+                    {/* Menu Categories */}
+                    {currentMenu.categories.map((category) => {
+                      const safeItems = category.items.filter(isItemSafeForUser);
+                      const unsafeItems = category.items.filter(item => !isItemSafeForUser(item));
+                      
+                      return (
+                        <Card key={category.id} className="shadow-soft">
+                          <CardHeader>
+                            <CardTitle className="text-lg">{category.name}</CardTitle>
+                            {category.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {category.description}
+                              </p>
+                            )}
+                            <div className="flex gap-2 text-sm">
+                              <span className="text-green-600 font-medium">
+                                {safeItems.length} safe items
+                              </span>
+                              {unsafeItems.length > 0 && (
+                                <span className="text-orange-600">
+                                  • {unsafeItems.length} filtered out
+                                </span>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {/* Safe Items */}
+                            {safeItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="p-4 border border-green-200 bg-green-50/50 rounded-lg relative"
+                              >
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="font-semibold text-foreground">
+                                        {item.name}
+                                      </h4>
+                                      {item.is_popular && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          <Star className="h-3 w-3 mr-1" />
+                                          Popular
+                                        </Badge>
+                                      )}
+                                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                        ✓ Safe
+                                      </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      {item.description}
+                                    </p>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                      <span className="font-semibold text-lg text-foreground">
+                                        £{item.price.toFixed(2)}
+                                      </span>
+                                      {item.preparation_time && (
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />
+                                          {item.preparation_time}min
+                                        </span>
+                                      )}
+                                      {item.calories && (
+                                        <span>{item.calories} cal</span>
+                                      )}
+                                      {item.spice_level && item.spice_level > 0 && (
+                                        <span className="text-red-600">
+                                          🌶️ {item.spice_level}/5
+                                        </span>
+                                      )}
+                                    </div>
+                                    {(item.dietary_info.length > 0 || item.allergens.length > 0) && (
+                                      <div className="flex gap-1 mt-2 flex-wrap">
+                                        {item.dietary_info.map((diet) => (
+                                          <Badge key={diet} variant="outline" className="text-xs">
+                                            {diet}
+                                          </Badge>
+                                        ))}
+                                        {item.allergens.map((allergen) => (
+                                          <Badge key={allergen} variant="destructive" className="text-xs">
+                                            {allergen}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => addToCart(item)}
+                                      className="whitespace-nowrap"
+                                    >
+                                      <Plus className="h-4 w-4 mr-1" />
+                                      Add
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => toggleFavourite(item.id)}
+                                      className={favourites.includes(item.id) ? "text-red-600" : ""}
+                                    >
+                                      <Heart className="h-4 w-4" fill={favourites.includes(item.id) ? "currentColor" : "none"} />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+
+                            {safeItems.length === 0 && (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <p>No safe items in this category based on your preferences.</p>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  onClick={() => navigate("/allergen-preferences")}
+                                  className="mt-2"
+                                >
+                                  Update Preferences
+                                </Button>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="cart" className="mt-6 space-y-4">
