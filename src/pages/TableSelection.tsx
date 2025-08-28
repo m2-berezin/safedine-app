@@ -29,14 +29,16 @@ export default function TableSelection() {
   const restaurantName = localStorage.getItem("safedine.restaurantName");
 
   useEffect(() => {
-    // Check for QR code table detection
+    // Clear any previously stored table data so users can always select a new table
+    localStorage.removeItem("safedine.tableId");
+    localStorage.removeItem("safedine.tableCode");
+
+    // Check for QR code table detection from URL only
     const tableIdFromUrl = searchParams.get("tableId");
     const tableCodeFromUrl = searchParams.get("tableCode");
-    const tableIdFromStorage = localStorage.getItem("safedine.tableId");
-    const tableCodeFromStorage = localStorage.getItem("safedine.tableCode");
 
-    if (tableIdFromUrl || tableCodeFromUrl || tableIdFromStorage || tableCodeFromStorage) {
-      const code = tableCodeFromUrl || tableCodeFromStorage;
+    if (tableIdFromUrl || tableCodeFromUrl) {
+      const code = tableCodeFromUrl;
       if (code) {
         toast({
           title: `Table ${code} detected`,
