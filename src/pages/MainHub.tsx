@@ -625,6 +625,64 @@ const MainHub = () => {
     });
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No user account found to delete.",
+      });
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data including order history, loyalty points, and preferences."
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      // Call the delete user RPC function
+      const { error } = await supabase.rpc('delete_user');
+      
+      if (error) {
+        throw error;
+      }
+
+      // Clear all local data
+      localStorage.removeItem("safedine.cart");
+      localStorage.removeItem("safedine.favourites");
+      localStorage.removeItem("safedine.appSettings");
+      localStorage.removeItem("safedine.preferences");
+      localStorage.removeItem("safedine.guestOrderTokens");
+      
+      // Clear all auth-related storage
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      
+      // Navigate to home page
+      navigate("/");
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        variant: "destructive",
+        title: "Delete Account Failed",
+        description: error.message || "Failed to delete account. Please try again or contact support.",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
