@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -116,6 +117,7 @@ const MainHub = () => {
     diets: string[];
   }>({ allergens: [], diets: [] });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [appSettings, setAppSettings] = useState({
     notifications: true,
     emailNotifications: true,
@@ -1423,9 +1425,14 @@ const MainHub = () => {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className="shadow-soft">
-                <CardContent className="p-4 text-center">
-                  <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
+              <Card className="shadow-soft cursor-pointer" onClick={() => setNotificationsOpen(true)}>
+                <CardContent className="p-4 text-center hover:bg-primary/5 transition-colors">
+                  <div className="relative">
+                    <Bell className="h-8 w-8 text-primary mx-auto mb-2" />
+                    <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      3
+                    </div>
+                  </div>
                   <p className="text-sm font-medium">Notifications</p>
                 </CardContent>
               </Card>
@@ -1778,6 +1785,82 @@ const MainHub = () => {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Notifications Panel */}
+      {notificationsOpen && (
+        <Dialog open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Notifications
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {/* Recent Notifications */}
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Order Ready for Pickup</h4>
+                    <p className="text-xs text-muted-foreground">Your order #1234 is ready at The Garden Bistro</p>
+                    <p className="text-xs text-muted-foreground mt-1">2 minutes ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 shrink-0"></div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">New Restaurant Available</h4>
+                    <p className="text-xs text-muted-foreground">Bella Italia is now available on SafeDine near you</p>
+                    <p className="text-xs text-muted-foreground mt-1">1 hour ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 shrink-0"></div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Allergen Alert</h4>
+                    <p className="text-xs text-muted-foreground">Menu updated with new allergen information at your favorite restaurant</p>
+                    <p className="text-xs text-muted-foreground mt-1">3 hours ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                  <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 shrink-0"></div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">Special Offer</h4>
+                    <p className="text-xs text-muted-foreground">20% off your next order at participating restaurants this weekend</p>
+                    <p className="text-xs text-muted-foreground mt-1">Yesterday</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Empty State for older notifications */}
+              <div className="text-center py-4">
+                <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                <p className="text-sm text-muted-foreground">No older notifications</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pt-4 border-t">
+              <Button variant="outline" className="flex-1" onClick={() => {
+                toast({
+                  title: "Notifications cleared",
+                  description: "All read notifications have been cleared."
+                });
+              }}>
+                Mark All Read
+              </Button>
+              <Button variant="outline" onClick={() => setSettingsOpen(true)}>
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
