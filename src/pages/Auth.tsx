@@ -31,29 +31,36 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
+      console.log('Sign in attempt:', { email: formData.email });
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
       
+      console.log('Sign in response:', { data, error });
+      
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           variant: "destructive",
           title: "Sign In Failed",
           description: error.message,
         });
       } else if (data.user) {
+        console.log('User signed in successfully:', data.user);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
         navigate('/location');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Sign in catch error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -76,6 +83,7 @@ const Auth = () => {
     
     try {
       const redirectUrl = `${window.location.origin}/location`;
+      console.log('Sign up attempt:', { email: formData.email, redirectUrl });
       
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -85,24 +93,33 @@ const Auth = () => {
         }
       });
       
+      console.log('Sign up response:', { data, error });
+      
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           variant: "destructive",
           title: "Sign Up Failed", 
           description: error.message,
         });
       } else if (data.user) {
+        console.log('User created successfully:', data.user);
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account.",
+          description: data.user.email_confirmed_at ? "Account ready to use!" : "Please check your email to verify your account.",
         });
-        navigate('/location');
+        
+        // Only navigate if email is confirmed or confirmation is disabled
+        if (data.user.email_confirmed_at || data.session) {
+          navigate('/location');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Sign up catch error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
