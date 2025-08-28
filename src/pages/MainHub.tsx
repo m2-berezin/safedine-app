@@ -512,12 +512,12 @@ const MainHub = () => {
       return;
     }
 
-    const tableId = localStorage.getItem("safedine.tableId");
+    const storedTableId = localStorage.getItem("safedine.tableId");
     const tableCode = localStorage.getItem("safedine.tableCode");
     
-    console.log('Table info:', { tableId, tableCode, restaurantId });
+    console.log('Table info from storage:', { storedTableId, tableCode, restaurantId });
 
-    if (!tableId || !tableCode) {
+    if (!storedTableId || !tableCode) {
       toast({
         variant: "destructive",
         title: "Table Information Missing",
@@ -536,12 +536,38 @@ const MainHub = () => {
     }
 
     try {
+      let actualTableId = storedTableId;
+      
+      // If the stored table ID is a temporary ID (starts with "temp-"), look up the real table
+      if (storedTableId.startsWith("temp-")) {
+        console.log('Looking up actual table ID for code:', tableCode);
+        
+        const { data: tableData, error: tableError } = await supabase
+          .from('dining_tables')
+          .select('id')
+          .eq('code', tableCode)
+          .eq('restaurant_id', restaurantId)
+          .maybeSingle();
+        
+        if (tableError) {
+          console.error('Error looking up table:', tableError);
+          throw new Error('Could not find table information');
+        }
+        
+        if (tableData) {
+          actualTableId = tableData.id;
+          console.log('Found actual table ID:', actualTableId);
+        } else {
+          throw new Error('Table not found in database');
+        }
+      }
+      
       const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       const orderData = {
         user_id: user?.id || null,
         restaurant_id: restaurantId,
-        table_id: tableId,
+        table_id: actualTableId,
         table_code: tableCode,
         items: JSON.parse(JSON.stringify(cartItems)), // Convert to plain JSON
         total_amount: totalAmount,
