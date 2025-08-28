@@ -721,11 +721,84 @@ const MainHub = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <EmptyState
-                  icon={Heart}
-                  title="No favourites yet"
-                  description="Tap the ♥ on a dish to add it to your favourites for quick reordering."
-                />
+                {favourites.length === 0 ? (
+                  <EmptyState
+                    icon={Heart}
+                    title="No favourites yet"
+                    description="Tap the ♥ on a dish to add it to your favourites for quick reordering."
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {(() => {
+                      // Get all favourite items from all menus
+                      const favouriteItems: MenuItem[] = [];
+                      menus?.forEach(menu => {
+                        menu.categories.forEach(category => {
+                          category.items
+                            .filter(item => favourites.includes(item.id) && isItemSafeForUser(item))
+                            .forEach(item => favouriteItems.push(item));
+                        });
+                      });
+                      
+                      return favouriteItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{item.name}</h4>
+                              {item.is_popular && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Popular
+                                </Badge>
+                              )}
+                              {item.dietary_info.length > 0 && (
+                                <div className="flex gap-1">
+                                  {item.dietary_info.map((diet) => (
+                                    <Badge key={diet} variant="outline" className="text-xs">
+                                      {diet}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="font-semibold text-primary">£{item.price.toFixed(2)}</span>
+                              {item.preparation_time && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {item.preparation_time} min
+                                </span>
+                              )}
+                              {item.calories && (
+                                <span>{item.calories} cal</span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              onClick={() => addToCart(item)}
+                              className="flex items-center gap-1"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleFavourite(item.id)}
+                              className="text-red-600"
+                            >
+                              <Heart className="h-4 w-4" fill="currentColor" />
+                            </Button>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
