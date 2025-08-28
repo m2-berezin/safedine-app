@@ -77,7 +77,7 @@ export default function ContactForm() {
 
       // Navigate back after a delay
       setTimeout(() => {
-        navigate(-1);
+        navigate("/main", { state: { activeTab: "profile" } });
       }, 2000);
 
     } catch (error) {
@@ -99,9 +99,9 @@ export default function ContactForm() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/main", { state: { activeTab: "profile" } })}
             className="shrink-0 hover:bg-primary/10 transition-colors"
-            aria-label="Go back to previous page"
+            aria-label="Go back to profile"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

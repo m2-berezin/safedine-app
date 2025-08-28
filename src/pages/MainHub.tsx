@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
@@ -323,6 +323,16 @@ const MainHub = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Handle navigation state (e.g., from contact form)
+  useEffect(() => {
+    const state = (location as any).state;
+    if (state?.activeTab) {
+      setActiveTab(state.activeTab);
+      // Clear the state to prevent it from affecting future navigations
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   useEffect(() => {
     // Load data from localStorage
