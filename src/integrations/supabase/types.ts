@@ -583,7 +583,62 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      reviews_public: {
+        Row: {
+          atmosphere_rating: number | null
+          comment: string | null
+          created_at: string | null
+          food_rating: number | null
+          id: string | null
+          order_id: string | null
+          rating: number | null
+          restaurant_id: string | null
+          service_rating: number | null
+          title: string | null
+          updated_at: string | null
+          visit_date: string | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          atmosphere_rating?: number | null
+          comment?: string | null
+          created_at?: string | null
+          food_rating?: number | null
+          id?: string | null
+          order_id?: string | null
+          rating?: number | null
+          restaurant_id?: string | null
+          service_rating?: number | null
+          title?: string | null
+          updated_at?: string | null
+          visit_date?: string | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          atmosphere_rating?: number | null
+          comment?: string | null
+          created_at?: string | null
+          food_rating?: number | null
+          id?: string | null
+          order_id?: string | null
+          rating?: number | null
+          restaurant_id?: string | null
+          service_rating?: number | null
+          title?: string | null
+          updated_at?: string | null
+          visit_date?: string | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_loyalty_tier: {
