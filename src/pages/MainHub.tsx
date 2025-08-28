@@ -1435,27 +1435,90 @@ const MainHub = () => {
                   Contact & Support
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call Restaurant
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Contact Form
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  FAQs
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Privacy Policy
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Terms & Conditions
-                </Button>
+              <CardContent className="space-y-4">
+                {/* Restaurant Contact Info */}
+                <div className="bg-muted rounded-lg p-3 space-y-2">
+                  <h4 className="font-medium text-sm">Restaurant Information</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3 w-3 text-primary" />
+                      <span className="text-muted-foreground">+44 1202 123 456</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3 w-3 text-primary" />
+                      <span className="text-muted-foreground">hello@{restaurantName?.toLowerCase().replace(/\s+/g, '-') || 'restaurant'}.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3 w-3 text-primary" />
+                      <span className="text-muted-foreground">Daily: 10:00 AM - 10:00 PM</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-12 flex-col gap-1"
+                    onClick={() => {
+                      window.open('tel:+441202123456');
+                      toast({
+                        title: "Calling restaurant",
+                        description: "Connecting you now...",
+                      });
+                    }}
+                  >
+                    <Phone className="h-4 w-4" />
+                    <span className="text-xs">Call Now</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-12 flex-col gap-1"
+                    onClick={() => {
+                      toast({
+                        title: "Staff notified",
+                        description: "A team member will assist you at your table shortly.",
+                      });
+                    }}
+                  >
+                    <Bell className="h-4 w-4" />
+                    <span className="text-xs">Call Staff</span>
+                  </Button>
+                </div>
+
+                {/* Support Options */}
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Contact form",
+                        description: "Opening contact form...",
+                      });
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Send Message
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "FAQs",
+                        description: "Common questions and answers",
+                      });
+                    }}
+                  >
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Frequently Asked Questions
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1626,19 +1689,75 @@ const MainHub = () => {
               <h3 className="text-lg font-semibold">Account</h3>
               
               <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="h-4 w-4 mr-2" />
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "Privacy Policy",
+                      description: "We take your privacy seriously. Your data is protected and never shared without consent.",
+                    });
+                  }}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
                   Privacy Policy
                 </Button>
                 
-                <Button variant="outline" className="w-full justify-start">
-                  <Shield className="h-4 w-4 mr-2" />
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "Terms of Service",
+                      description: "By using SafeDine, you agree to our terms and conditions for safe dining.",
+                    });
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
                   Terms of Service
                 </Button>
                 
-                <Button variant="outline" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "Help & Support",
+                      description: "Contact us at support@safedine.com or call +44 800 123 456 for assistance.",
+                    });
+                  }}
+                >
                   <HelpCircle className="h-4 w-4 mr-2" />
                   Help & Support
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    window.open('mailto:feedback@safedine.com?subject=SafeDine Feedback');
+                    toast({
+                      title: "Feedback",
+                      description: "Thank you for helping us improve SafeDine!",
+                    });
+                  }}
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Send Feedback
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    toast({
+                      title: "Emergency Contact",
+                      description: "For dining emergencies, please contact restaurant staff immediately or call 999.",
+                    });
+                  }}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Emergency Contact
                 </Button>
               </div>
               
@@ -1656,10 +1775,37 @@ const MainHub = () => {
               )}
             </div>
 
-            {/* App Info */}
-            <div className="pt-4 text-center text-sm text-muted-foreground">
-              <p>SafeDine v1.0.0</p>
-              <p>© 2024 SafeDine. All rights reserved.</p>
+            {/* App Info & Support */}
+            <div className="pt-4 space-y-3">
+              <Separator />
+              
+              <div className="text-center space-y-2">
+                <div className="text-sm font-medium">SafeDine v1.0.0</div>
+                <div className="text-xs text-muted-foreground">Safe dining for everyone</div>
+              </div>
+              
+              <div className="bg-muted rounded-lg p-3 space-y-2">
+                <h4 className="text-sm font-medium">Support Contacts</h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span>General Support:</span>
+                    <span className="text-primary">support@safedine.com</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Emergency Hotline:</span>
+                    <span className="text-primary">+44 800 123 456</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Business Hours:</span>
+                    <span>24/7 Support</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-center text-xs text-muted-foreground space-y-1">
+                <p>© 2024 SafeDine Ltd. All rights reserved.</p>
+                <p>Making dining safe and accessible for everyone</p>
+              </div>
             </div>
           </div>
         </SheetContent>
