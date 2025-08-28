@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +30,6 @@ import {
   Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { User, Session } from '@supabase/supabase-js';
 
 interface CartItem {
   id: string;
@@ -42,7 +43,7 @@ interface OrderHistory {
   created_at: string;
   restaurant_id: string;
   table_code: string;
-  items: CartItem[];
+  items: Json; // Changed from CartItem[] to Json to match Supabase type
   total_amount: number;
   status: string;
 }
@@ -547,6 +548,33 @@ const MainHub = () => {
   const currentMenu = menus?.find(menu => menu.id === selectedMenu);
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleReorder = (order: OrderHistory) => {
+    // Clear current cart
+    setCartItems([]);
+    
+    // Add items from the order to cart - properly handle Json type
+    const orderItems = Array.isArray(order.items) ? (order.items as unknown as CartItem[]) : [];
+    const reorderedItems = orderItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity
+    }));
+    
+    setCartItems(reorderedItems);
+    localStorage.setItem("safedine.cart", JSON.stringify(reorderedItems));
+    
+    // Switch to cart tab
+    setActiveTab("cart");
+    
+    // Show success message
+    const itemCount = reorderedItems.reduce((sum, item) => sum + item.quantity, 0);
+    toast({
+      title: "Items Added to Cart",
+      description: `${itemCount} item${itemCount !== 1 ? 's' : ''} from your previous order have been added to your cart.`,
+    });
+  };
 
   const handlePlaceOrder = async () => {
     console.log('Starting order placement...');
@@ -1258,7 +1286,7 @@ const MainHub = () => {
                             </span>
                           ))}
                         </div>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => handleReorder(order)}>
                           Reorder
                         </Button>
                       </div>
