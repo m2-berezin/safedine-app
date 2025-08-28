@@ -73,6 +73,147 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          menu_id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          menu_id: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          menu_id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          allergens: string[] | null
+          calories: number | null
+          category_id: string
+          created_at: string
+          description: string | null
+          dietary_info: string[] | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          is_popular: boolean
+          name: string
+          preparation_time: number | null
+          price: number
+          spice_level: number | null
+          updated_at: string
+        }
+        Insert: {
+          allergens?: string[] | null
+          calories?: number | null
+          category_id: string
+          created_at?: string
+          description?: string | null
+          dietary_info?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          is_popular?: boolean
+          name: string
+          preparation_time?: number | null
+          price: number
+          spice_level?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allergens?: string[] | null
+          calories?: number | null
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          dietary_info?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          is_popular?: boolean
+          name?: string
+          preparation_time?: number | null
+          price?: number
+          spice_level?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menus: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menus_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurants: {
         Row: {
           address: string
