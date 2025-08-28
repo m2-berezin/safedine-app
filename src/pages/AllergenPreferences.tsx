@@ -95,8 +95,8 @@ const AllergenPreferences = () => {
       description: "Your dietary preferences have been saved successfully.",
     });
 
-    // Navigate to menu page (assuming it will be /menu)
-    navigate("/menu");
+    // Navigate to main hub
+    navigate("/main");
   };
 
   return (

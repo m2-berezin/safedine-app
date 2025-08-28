@@ -9,6 +9,7 @@ import Location from "./pages/Location";
 import TableSelection from "./pages/TableSelection";
 import Consent from "./pages/Consent";
 import AllergenPreferences from "./pages/AllergenPreferences";
+import MainHub from "./pages/MainHub";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/table-selection" element={<TableSelection />} />
           <Route path="/consent" element={<Consent />} />
           <Route path="/allergen-preferences" element={<AllergenPreferences />} />
+          <Route path="/main" element={<MainHub />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
