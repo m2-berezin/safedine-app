@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import OrderTracking from "@/components/OrderTracking";
+import ReviewsList from "@/components/ReviewsList";
 
 interface CartItem {
   id: string;
@@ -1348,6 +1349,10 @@ const MainHub = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="reviews" className="mt-6 space-y-4">
+            <ReviewsList restaurantId={restaurantId} currentUserId={user?.id} />
+          </TabsContent>
+
           <TabsContent value="profile" className="mt-6 space-y-4">
             {/* Profile Summary */}
             <Card className="shadow-soft">
@@ -1610,6 +1615,18 @@ const MainHub = () => {
           >
             <Heart className="h-4 w-4" />
             <span className="text-xs font-medium">Favourites</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              activeTab === "reviews" 
+                ? "text-primary bg-primary/5" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Star className="h-4 w-4" />
+            <span className="text-xs font-medium">Reviews</span>
           </button>
           
           <button

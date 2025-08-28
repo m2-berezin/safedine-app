@@ -330,6 +330,65 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          atmosphere_rating: number | null
+          comment: string | null
+          created_at: string
+          food_rating: number | null
+          id: string
+          order_id: string | null
+          rating: number
+          restaurant_id: string
+          service_rating: number | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+          visit_date: string | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          atmosphere_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          food_rating?: number | null
+          id?: string
+          order_id?: string | null
+          rating: number
+          restaurant_id: string
+          service_rating?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visit_date?: string | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          atmosphere_rating?: number | null
+          comment?: string | null
+          created_at?: string
+          food_rating?: number | null
+          id?: string
+          order_id?: string | null
+          rating?: number
+          restaurant_id?: string
+          service_rating?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          visit_date?: string | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_favorites: {
         Row: {
           created_at: string
