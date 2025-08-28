@@ -43,6 +43,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import OrderTracking from "@/components/OrderTracking";
 import ReviewsList from "@/components/ReviewsList";
+import MenuItemSkeleton from "@/components/skeletons/MenuItemSkeleton";
+import FadeInUp from "@/components/animations/FadeInUp";
+import { LoadingCard, SkeletonGrid, EmptyState } from "@/components/LoadingStates";
 
 interface CartItem {
   id: string;
@@ -896,21 +899,7 @@ const MainHub = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsContent value="menu" className="mt-6 space-y-4">
             {menusLoading ? (
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Menu className="h-5 w-5 text-primary" />
-                    Loading Menu...
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-1/2"></div>
-                    <div className="h-4 bg-muted rounded w-5/6"></div>
-                  </div>
-                </CardContent>
-              </Card>
+              <LoadingCard title="Loading Menu..." description="Fetching your personalized safe menu based on dietary preferences" />
             ) : !menus || menus.length === 0 ? (
                 <Card className="shadow-soft">
                   <CardHeader>

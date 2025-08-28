@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, ChefHat, CheckCircle, AlertCircle, Package } from "lucide-react";
+import { Clock, ChefHat, CheckCircle, AlertCircle, Package, MapPin, Receipt } from "lucide-react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import OrderSkeleton from "@/components/skeletons/OrderSkeleton";
+import FadeInUp from "@/components/animations/FadeInUp";
+import { EmptyState } from "@/components/LoadingStates";
 
 interface Order {
   id: string;
@@ -143,35 +147,39 @@ export default function OrderTracking({ userId }: OrderTrackingProps) {
 
   if (loading) {
     return (
-      <Card className="shadow-soft">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          Live Order Tracking
+        </h3>
+        <div className="space-y-4">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <FadeInUp key={index} delay={index * 100}>
+              <OrderSkeleton />
+            </FadeInUp>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <Card className="shadow-soft">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            Order Tracking
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">No recent orders found</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Place an order to see real-time tracking updates
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          Live Order Tracking
+        </h3>
+        <Card className="shadow-soft">
+          <CardContent>
+            <EmptyState
+              icon={Package}
+              title="No recent orders found"
+              description="Place an order to see real-time tracking updates"
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -182,76 +190,80 @@ export default function OrderTracking({ userId }: OrderTrackingProps) {
         Live Order Tracking
       </h3>
       
-      {orders.map((order) => {
+      {orders.map((order, index) => {
         const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.pending;
         const IconComponent = config.icon;
         
         return (
-          <Card key={order.id} className="shadow-soft border-l-4 border-l-primary">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge 
-                      variant="secondary" 
-                      className={`${config.color} text-white hover:${config.color}/80`}
-                    >
-                      <IconComponent className="h-3 w-3 mr-1" />
-                      {config.label}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Table {order.table_code}
-                    </span>
+          <FadeInUp key={order.id} delay={index * 100}>
+            <Card className="shadow-soft border-l-4 border-l-primary hover:shadow-medium transition-all duration-300">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge 
+                        variant="secondary" 
+                        className={`${config.color} text-white hover:${config.color}/80`}
+                      >
+                        <IconComponent className="h-3 w-3 mr-1" />
+                        {config.label}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        Table {order.table_code}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Receipt className="h-3 w-3" />
+                      Order #{order.id.slice(0, 8)} • {formatTime(order.created_at)}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Order #{order.id.slice(0, 8)} • {formatTime(order.created_at)}
-                  </p>
+                  <div className="text-right">
+                    <p className="font-medium">£{Number(order.total_amount).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {order.status === 'ready' ? 'Ready now!' : `Est. ${getEstimatedTime(order)}`}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">£{Number(order.total_amount).toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {order.status === 'ready' ? 'Ready now!' : `Est. ${getEstimatedTime(order)}`}
-                  </p>
+                
+                {/* Progress Bar with Animation */}
+                <div className="mb-3">
+                  <Progress value={config.progress} className="h-2 animate-fade-in" />
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Ordered</span>
+                    <span>Confirmed</span>
+                    <span>Preparing</span>
+                    <span>Ready</span>
+                  </div>
                 </div>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <Progress value={config.progress} className="h-2" />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Ordered</span>
-                  <span>Confirmed</span>
-                  <span>Preparing</span>
-                  <span>Ready</span>
+                
+                {/* Order Items Summary */}
+                <div className="text-sm text-muted-foreground">
+                  {order.items && Array.isArray(order.items) && order.items.length > 0 ? (
+                    <p>
+                      {order.items.slice(0, 2).map((item: any) => item.name || 'Item').join(', ')}
+                      {order.items.length > 2 && ` +${order.items.length - 2} more`}
+                    </p>
+                  ) : (
+                    <p>No items listed</p>
+                  )}
                 </div>
-              </div>
-              
-              {/* Order Items Summary */}
-              <div className="text-sm text-muted-foreground">
-                {order.items && Array.isArray(order.items) && order.items.length > 0 ? (
-                  <p>
-                    {order.items.slice(0, 2).map((item: any) => item.name || 'Item').join(', ')}
-                    {order.items.length > 2 && ` +${order.items.length - 2} more`}
-                  </p>
-                ) : (
-                  <p>No items listed</p>
+                
+                {/* Notes */}
+                {order.notes && (
+                  <div className="mt-2 p-2 bg-muted/50 rounded text-sm animate-fade-in">
+                    <strong>Note:</strong> {order.notes}
+                  </div>
                 )}
-              </div>
-              
-              {/* Notes */}
-              {order.notes && (
-                <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
-                  <strong>Note:</strong> {order.notes}
+                
+                {/* Real-time indicator */}
+                <div className="flex items-center justify-end gap-1 mt-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-muted-foreground">Live updates</span>
                 </div>
-              )}
-              
-              {/* Real-time indicator */}
-              <div className="flex items-center justify-end gap-1 mt-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-muted-foreground">Live updates</span>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </FadeInUp>
         );
       })}
     </div>
