@@ -1803,8 +1803,8 @@ const MainHub = () => {
                 <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border">
                   <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">Order Ready for Pickup</h4>
-                    <p className="text-xs text-muted-foreground">Your order #1234 is ready at The Garden Bistro</p>
+                    <h4 className="font-medium text-sm">Order Confirmed</h4>
+                    <p className="text-xs text-muted-foreground">Thank you for your order, the food is now cooking.</p>
                     <p className="text-xs text-muted-foreground mt-1">2 minutes ago</p>
                   </div>
                 </div>
@@ -1813,7 +1813,7 @@ const MainHub = () => {
                   <div className="w-2 h-2 bg-muted-foreground/50 rounded-full mt-2 shrink-0"></div>
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">New Restaurant Available</h4>
-                    <p className="text-xs text-muted-foreground">Bella Italia is now available on SafeDine near you</p>
+                    <p className="text-xs text-muted-foreground">New the real greek restaurant Available in Soho</p>
                     <p className="text-xs text-muted-foreground mt-1">1 hour ago</p>
                   </div>
                 </div>
