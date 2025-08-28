@@ -13,6 +13,8 @@ import AllergenPreferences from "./pages/AllergenPreferences";
 import MainHub from "./pages/MainHub";
 import ContactForm from "./pages/ContactForm";
 import FAQs from "./pages/FAQs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/main" element={<MainHub />} />
             <Route path="/contact" element={<ContactForm />} />
             <Route path="/faqs" element={<FAQs />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

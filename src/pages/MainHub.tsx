@@ -1680,12 +1680,7 @@ const MainHub = () => {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => {
-                    toast({
-                      title: "Privacy Policy",
-                      description: "We take your privacy seriously. Your data is protected and never shared without consent.",
-                    });
-                  }}
+                  onClick={() => navigate("/privacy-policy")}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Privacy Policy
@@ -1694,12 +1689,7 @@ const MainHub = () => {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => {
-                    toast({
-                      title: "Terms of Service",
-                      description: "By using SafeDine, you agree to our terms and conditions for safe dining.",
-                    });
-                  }}
+                  onClick={() => navigate("/terms-and-conditions")}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Terms of Service
