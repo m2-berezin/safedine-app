@@ -23,7 +23,6 @@ import {
 
 interface Review {
   id: string;
-  user_id: string;
   rating: number;
   title: string | null;
   comment: string | null;
@@ -58,7 +57,7 @@ export default function ReviewsList({ restaurantId, currentUserId }: ReviewsList
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('reviews_public')
         .select('*')
         .eq('restaurant_id', restaurantId)
         .order('created_at', { ascending: false });
@@ -124,8 +123,8 @@ export default function ReviewsList({ restaurantId, currentUserId }: ReviewsList
     });
   };
 
-  const getUserInitials = (userId: string) => {
-    // For privacy, we'll just show generic initials
+  const getUserInitials = () => {
+    // For privacy, we'll just show generic initials for all users
     return "U";
   };
 
@@ -243,7 +242,7 @@ export default function ReviewsList({ restaurantId, currentUserId }: ReviewsList
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarFallback className="bg-primary text-primary-foreground">
-                              {getUserInitials(review.user_id)}
+                              {getUserInitials()}
                             </AvatarFallback>
                           </Avatar>
                           <div>

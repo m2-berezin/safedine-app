@@ -157,9 +157,7 @@ const MainHub = () => {
   const { data: menus, isLoading: menusLoading, error: menusError } = useQuery({
     queryKey: ['menus', restaurantId],
     queryFn: async () => {
-      console.log('Fetching menus for restaurant ID:', restaurantId);
       if (!restaurantId) {
-        console.log('No restaurant ID provided');
         return [];
       }
       
@@ -194,7 +192,6 @@ const MainHub = () => {
         .eq('is_active', true)
         .order('display_order');
       
-      console.log('Menu query result:', { data, error });
       if (error) {
         console.error('Menu fetch error:', error);
         throw error;
@@ -210,10 +207,9 @@ const MainHub = () => {
             items: category.menu_items
               .filter(item => item.is_available)
               .sort((a, b) => a.name.localeCompare(b.name))
-          }))
+        }))
       })) as MenuType[];
       
-      console.log('Transformed menus:', transformedMenus);
       return transformedMenus;
     },
     enabled: !!restaurantId
@@ -244,7 +240,8 @@ const MainHub = () => {
   const { data: userOrderHistory, refetch: refetchOrders } = useQuery({
     queryKey: ['user-orders', user?.id],
     queryFn: async () => {
-      return fetchUserOrders(user?.id || null);
+      const { fetchUserOrdersSecure } = await import('@/lib/secureOrderClient');
+      return fetchUserOrdersSecure(user?.id || null);
     }
   });
 
@@ -668,10 +665,6 @@ const MainHub = () => {
   };
 
   const handlePlaceOrder = async () => {
-    console.log('Starting order placement...');
-    console.log('User:', user?.id);
-    console.log('Cart items:', cartItems);
-    
     if (cartItems.length === 0) {
       toast({
         variant: "destructive",
@@ -684,8 +677,6 @@ const MainHub = () => {
     const storedTableId = localStorage.getItem("safedine.tableId");
     const tableCode = localStorage.getItem("safedine.tableCode");
     
-    console.log('Table info from storage:', { storedTableId, tableCode, restaurantId });
-
     if (!storedTableId || !tableCode) {
       toast({
         variant: "destructive",
@@ -709,8 +700,6 @@ const MainHub = () => {
       
       // If the stored table ID is a temporary ID (starts with "temp-"), look up the real table
       if (storedTableId.startsWith("temp-")) {
-        console.log('Looking up actual table ID for code:', tableCode);
-        
         const { data: tableData, error: tableError } = await supabase
           .from('dining_tables')
           .select('id')
@@ -725,7 +714,6 @@ const MainHub = () => {
         
         if (tableData) {
           actualTableId = tableData.id;
-          console.log('Found actual table ID:', actualTableId);
         } else {
           throw new Error('Table not found in database');
         }
@@ -733,45 +721,38 @@ const MainHub = () => {
       
       const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
-      // Generate order token for guest orders
-      const orderToken = user?.id ? null : generateOrderToken();
-      
-      const orderData = {
-        user_id: user?.id || null,
-        restaurant_id: restaurantId,
-        table_id: actualTableId,
-        table_code: tableCode,
-        items: JSON.parse(JSON.stringify(cartItems)), // Convert to plain JSON
-        total_amount: totalAmount,
-        status: 'pending',
-        order_token: orderToken
-      };
-      
-      console.log('Order data being sent:', orderData);
-      
-      const { error, data } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select();
-
-      console.log('Supabase response:', { error, data });
+      // Use secure edge function for order placement
+      const { data: orderResponse, error } = await supabase.functions.invoke('secure-place-order', {
+        body: {
+          restaurant_id: restaurantId,
+          table_id: actualTableId,
+          table_code: tableCode,
+          items: cartItems,
+          total_amount: totalAmount,
+          user_id: user?.id
+        }
+      });
 
       if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
+        console.error('Order placement failed:', error);
+        throw new Error('Failed to place order');
+      }
+
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.error || 'Order placement failed');
       }
 
       // Store guest order token for future access
-      if (orderToken && data && data[0]) {
-        storeGuestOrderToken(data[0].id, orderToken);
+      if (orderResponse.order.order_token) {
+        storeGuestOrderToken(orderResponse.order.id, orderResponse.order.order_token);
       }
 
       // Clear cart after successful order
       setCartItems([]);
       localStorage.removeItem("safedine.cart");
 
-      // Award loyalty points for the order (1 point per £1 spent)
-      if (user?.id && data && data[0]) {
+      // Award loyalty points for authenticated users
+      if (user?.id) {
         const pointsEarned = Math.floor(totalAmount);
         
         try {
@@ -783,24 +764,18 @@ const MainHub = () => {
               transaction_type: 'earned',
               points: pointsEarned,
               description: `Order placed - £${totalAmount.toFixed(2)}`,
-              reference_id: data[0].id,
+              reference_id: orderResponse.order.id,
               reference_type: 'order'
             });
 
-          if (transactionError) {
-            console.error('Loyalty transaction error:', transactionError);
-          } else {
+          if (!transactionError) {
             // Update loyalty profile
-            const { error: updateError } = await supabase.rpc('update_loyalty_profile', {
+            await supabase.rpc('update_loyalty_profile', {
               user_id_param: user.id,
               points_change: pointsEarned
             });
-
-            if (updateError) {
-              console.error('Loyalty profile update error:', updateError);
-            } else {
-              console.log(`Awarded ${pointsEarned} loyalty points for order`);
-            }
+            
+            console.log(`Awarded ${pointsEarned} loyalty points`);
           }
         } catch (loyaltyError) {
           console.error('Loyalty points error:', loyaltyError);
