@@ -29,11 +29,6 @@ export default function TableSelection() {
   const restaurantName = localStorage.getItem("safedine.restaurantName");
 
   useEffect(() => {
-    if (!restaurantId) {
-      navigate("/location");
-      return;
-    }
-
     // Check for QR code table detection
     const tableIdFromUrl = searchParams.get("tableId");
     const tableCodeFromUrl = searchParams.get("tableCode");
@@ -53,7 +48,7 @@ export default function TableSelection() {
     }
 
     fetchTables();
-  }, [restaurantId, navigate, searchParams]);
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     // Filter tables based on search
@@ -73,18 +68,44 @@ export default function TableSelection() {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from("dining_tables")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("code::integer");
+      console.log("Fetching tables for restaurant:", restaurantId);
 
-      if (fetchError) throw fetchError;
+      let query = supabase
+        .from("dining_tables")
+        .select("*");
+
+      // If we have a restaurant ID, filter by it, otherwise show all tables
+      if (restaurantId) {
+        query = query.eq("restaurant_id", restaurantId);
+      }
+
+      const { data, error: fetchError } = await query.order("code::integer");
+
+      if (fetchError) {
+        console.error("Supabase error:", fetchError);
+        throw fetchError;
+      }
       
+      console.log("Fetched tables:", data);
       setTables(data || []);
     } catch (err) {
       console.error("Error fetching tables:", err);
-      setError("Couldn't load tables. Check your connection and try again.");
+      // Instead of showing error, let's try to show all tables as fallback
+      try {
+        console.log("Trying to fetch all tables as fallback...");
+        const { data, error: fallbackError } = await supabase
+          .from("dining_tables")
+          .select("*")
+          .order("code::integer");
+        
+        if (fallbackError) throw fallbackError;
+        
+        setTables(data || []);
+        console.log("Fallback fetch successful:", data);
+      } catch (fallbackErr) {
+        console.error("Fallback fetch also failed:", fallbackErr);
+        setError("Unable to load tables. Please refresh the page.");
+      }
     } finally {
       setLoading(false);
     }
