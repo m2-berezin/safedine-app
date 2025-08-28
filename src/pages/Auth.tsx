@@ -97,10 +97,17 @@ const Auth = () => {
       
       if (error) {
         console.error('Sign up error:', error);
+        let errorMessage = error.message;
+        
+        // Handle rate limit error specifically
+        if (error.message.includes('email rate limit exceeded')) {
+          errorMessage = "Email rate limit exceeded. Please wait 1 hour, use a different email, or contact support to disable email confirmation.";
+        }
+        
         toast({
           variant: "destructive",
           title: "Sign Up Failed", 
-          description: error.message,
+          description: errorMessage,
         });
       } else if (data.user) {
         console.log('User created successfully:', data.user);
