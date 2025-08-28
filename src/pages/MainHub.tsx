@@ -47,6 +47,7 @@ import MenuItemSkeleton from "@/components/skeletons/MenuItemSkeleton";
 import FadeInUp from "@/components/animations/FadeInUp";
 import { LoadingCard, SkeletonGrid, EmptyState } from "@/components/LoadingStates";
 import OrderDetailsModal from "@/components/OrderDetailsModal";
+import LoyaltyProgram from "@/components/LoyaltyProgram";
 
 interface CartItem {
   id: string;
@@ -780,6 +781,44 @@ const MainHub = () => {
       setCartItems([]);
       localStorage.removeItem("safedine.cart");
 
+      // Award loyalty points for the order (1 point per £1 spent)
+      if (user?.id && data && data[0]) {
+        const pointsEarned = Math.floor(totalAmount);
+        
+        try {
+          // Create loyalty transaction
+          const { error: transactionError } = await supabase
+            .from('loyalty_transactions')
+            .insert({
+              user_id: user.id,
+              transaction_type: 'earned',
+              points: pointsEarned,
+              description: `Order placed - £${totalAmount.toFixed(2)}`,
+              reference_id: data[0].id,
+              reference_type: 'order'
+            });
+
+          if (transactionError) {
+            console.error('Loyalty transaction error:', transactionError);
+          } else {
+            // Update loyalty profile
+            const { error: updateError } = await supabase.rpc('update_loyalty_profile', {
+              user_id_param: user.id,
+              points_change: pointsEarned
+            });
+
+            if (updateError) {
+              console.error('Loyalty profile update error:', updateError);
+            } else {
+              console.log(`Awarded ${pointsEarned} loyalty points for order`);
+            }
+          }
+        } catch (loyaltyError) {
+          console.error('Loyalty points error:', loyaltyError);
+          // Don't fail the order if loyalty points fail
+        }
+      }
+
       // Save restaurant visit for authenticated users
       if (user?.id) {
         try {
@@ -831,7 +870,7 @@ const MainHub = () => {
 
       toast({
         title: "Order Placed Successfully!",
-        description: `Your order has been sent to Table ${tableCode}. Total: £${totalAmount.toFixed(2)}`,
+        description: `Your order has been sent to Table ${tableCode}. Total: £${totalAmount.toFixed(2)}${user?.id ? ` (+${Math.floor(totalAmount)} loyalty points!)` : ''}`,
       });
 
       // Refetch order history to show the new order
@@ -1367,14 +1406,23 @@ const MainHub = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src="/avatar-placeholder.png" />
+                    <AvatarImage src={user?.user_metadata?.avatar_url || "/avatar-placeholder.png"} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                      U
+                      {user?.email?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-semibold text-lg">Guest User</h3>
-                    <p className="text-muted-foreground">Dining anonymously</p>
+                    <h3 className="font-semibold text-lg">
+                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest User'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {user?.email || 'Dining anonymously'}
+                    </p>
+                    {user?.created_at && (
+                      <p className="text-sm text-muted-foreground">
+                        Member since {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button 
@@ -1385,6 +1433,11 @@ const MainHub = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Loyalty Program Section */}
+            {user?.id && (
+              <LoyaltyProgram userId={user.id} />
+            )}
 
             {/* Order History */}
             <Card className="shadow-soft">

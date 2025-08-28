@@ -78,9 +78,37 @@ export default function ReviewForm({ restaurantId, orderId, onReviewSubmitted, o
         throw error;
       }
 
+      // Award loyalty points for writing a review (25 points)
+      try {
+        const pointsEarned = 25;
+        
+        // Create loyalty transaction
+        const { error: transactionError } = await supabase
+          .from('loyalty_transactions')
+          .insert({
+            user_id: user.id,
+            transaction_type: 'earned',
+            points: pointsEarned,
+            description: 'Review submitted',
+            reference_id: orderId,
+            reference_type: 'review'
+          });
+
+        if (!transactionError) {
+          // Update loyalty profile
+          await supabase.rpc('update_loyalty_profile', {
+            user_id_param: user.id,
+            points_change: pointsEarned
+          });
+        }
+      } catch (loyaltyError) {
+        console.error('Loyalty points error:', loyaltyError);
+        // Don't fail the review if loyalty points fail
+      }
+
       toast({
         title: "Review Submitted",
-        description: "Thank you for your feedback!",
+        description: "Thank you for your feedback! (+25 loyalty points)",
       });
 
       // Reset form
