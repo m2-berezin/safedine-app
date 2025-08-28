@@ -99,9 +99,9 @@ const Auth = () => {
         console.error('Sign up error:', error);
         let errorMessage = error.message;
         
-        // Handle rate limit error specifically
-        if (error.message.includes('email rate limit exceeded')) {
-          errorMessage = "Email rate limit exceeded. Please wait 1 hour, use a different email, or contact support to disable email confirmation.";
+        // Handle different types of rate limit errors
+        if (error.message.includes('rate limit') || error.status === 429) {
+          errorMessage = "Rate limit exceeded. This could be due to:\n• Too many signup attempts from your IP\n• Project-level rate limits\n• Email confirmation limits\n\nSolutions:\n• Wait 10-15 minutes and try again\n• Disable email confirmation in Supabase settings\n• Use a VPN to change your IP";
         }
         
         toast({
