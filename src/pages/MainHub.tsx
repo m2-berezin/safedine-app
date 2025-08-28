@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import OrderTracking from "@/components/OrderTracking";
-import OrderStatusDemo from "@/components/OrderStatusDemo";
 
 interface CartItem {
   id: string;
@@ -1216,9 +1215,6 @@ const MainHub = () => {
           <TabsContent value="orders" className="mt-6 space-y-4">
             {/* Real-time Order Tracking */}
             <OrderTracking userId={user?.id} />
-            
-            {/* Demo Controls */}
-            <OrderStatusDemo />
             
             {/* Order History */}
             <Card className="shadow-soft">
