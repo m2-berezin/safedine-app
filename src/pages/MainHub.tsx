@@ -499,15 +499,6 @@ const MainHub = () => {
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const handlePlaceOrder = async () => {
-    if (!user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Required",
-        description: "Please sign in to place an order.",
-      });
-      return;
-    }
-
     if (cartItems.length === 0) {
       toast({
         variant: "destructive",
@@ -535,7 +526,7 @@ const MainHub = () => {
       const { error } = await supabase
         .from('orders')
         .insert({
-          user_id: user.id,
+          user_id: user?.id || null, // Allow null for guest users
           restaurant_id: restaurantId,
           table_id: tableId,
           table_code: tableCode,
@@ -557,6 +548,9 @@ const MainHub = () => {
 
       // Refetch order history to show the new order
       refetchOrders();
+      
+      // Switch to profile tab to show order confirmation
+      setActiveTab("profile");
 
     } catch (error) {
       console.error('Error placing order:', error);
