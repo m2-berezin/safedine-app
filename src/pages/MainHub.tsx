@@ -12,7 +12,7 @@ import {
   Menu, 
   ShoppingCart, 
   Heart, 
-  User, 
+  User as UserIcon, 
   Phone, 
   MessageCircle, 
   Clock, 
@@ -27,6 +27,8 @@ import {
   Minus,
   Trash2
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { User, Session } from '@supabase/supabase-js';
 
 interface CartItem {
   id: string;
@@ -82,6 +84,9 @@ interface MenuType {
 
 const MainHub = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [activeTab, setActiveTab] = useState("menu");
   const [selectedMenu, setSelectedMenu] = useState<string>("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -179,10 +184,49 @@ const MainHub = () => {
     enabled: !!restaurantId
   });
 
+  // Fetch user favorites from database
+  const { data: userFavoritesData, refetch: refetchFavorites } = useQuery({
+    queryKey: ['user-favorites', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select('menu_item_id')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching favorites:', error);
+        return [];
+      }
+      
+      return data.map(fav => fav.menu_item_id);
+    },
+    enabled: !!user?.id
+  });
+
+  // Set up auth state listener
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     // Load data from localStorage
     const savedCart = localStorage.getItem("safedine.cart");
-    const savedFavourites = localStorage.getItem("safedine.favourites");
     const savedHistory = localStorage.getItem("safedine.orderHistory");
     const savedRestaurants = localStorage.getItem("safedine.restaurants");
     const savedRestaurantId = localStorage.getItem("safedine.restaurantId");
@@ -191,7 +235,6 @@ const MainHub = () => {
     const savedPreferences = localStorage.getItem("safedine.preferences");
 
     if (savedCart) setCartItems(JSON.parse(savedCart));
-    if (savedFavourites) setFavourites(JSON.parse(savedFavourites));
     if (savedHistory) setOrderHistory(JSON.parse(savedHistory));
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
     if (savedPreferences) setUserPreferences(JSON.parse(savedPreferences));
@@ -205,7 +248,20 @@ const MainHub = () => {
       setRestaurantName(savedRestaurantName);
     }
     setTableNumber(savedTableCode || "Unknown");
-  }, []);
+
+    // Load favorites from localStorage for guest users or as fallback
+    const savedFavourites = localStorage.getItem("safedine.favourites");
+    if (savedFavourites && !user?.id) {
+      setFavourites(JSON.parse(savedFavourites));
+    }
+  }, [user?.id]);
+
+  // Update favorites when user favorites data loads
+  useEffect(() => {
+    if (user?.id && userFavoritesData) {
+      setFavourites(userFavoritesData);
+    }
+  }, [user?.id, userFavoritesData]);
 
   // Fallback query to find restaurant by name if no ID is stored
   const { data: restaurantByName } = useQuery({
@@ -332,13 +388,78 @@ const MainHub = () => {
     localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
   };
 
-  const toggleFavourite = (itemId: string) => {
-    const updatedFavourites = favourites.includes(itemId)
-      ? favourites.filter(id => id !== itemId)
-      : [...favourites, itemId];
+  const toggleFavourite = async (itemId: string) => {
+    const isCurrentlyFavourite = favourites.includes(itemId);
     
-    setFavourites(updatedFavourites);
-    localStorage.setItem("safedine.favourites", JSON.stringify(updatedFavourites));
+    if (user?.id) {
+      // User is authenticated - save to database
+      try {
+        if (isCurrentlyFavourite) {
+          // Remove from database
+          const { error } = await supabase
+            .from('user_favorites')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('menu_item_id', itemId);
+          
+          if (error) throw error;
+          
+          // Update local state
+          const updatedFavourites = favourites.filter(id => id !== itemId);
+          setFavourites(updatedFavourites);
+          
+          toast({
+            title: "Removed from favorites",
+            description: "Item removed from your favorites.",
+          });
+        } else {
+          // Add to database
+          const { error } = await supabase
+            .from('user_favorites')
+            .insert({
+              user_id: user.id,
+              menu_item_id: itemId
+            });
+          
+          if (error) throw error;
+          
+          // Update local state
+          const updatedFavourites = [...favourites, itemId];
+          setFavourites(updatedFavourites);
+          
+          toast({
+            title: "Added to favorites",
+            description: "Item added to your favorites.",
+          });
+        }
+        
+        // Refetch to ensure consistency
+        refetchFavorites();
+        
+      } catch (error) {
+        console.error('Error updating favorites:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update favorites. Please try again.",
+        });
+      }
+    } else {
+      // Guest user - use localStorage
+      const updatedFavourites = isCurrentlyFavourite
+        ? favourites.filter(id => id !== itemId)
+        : [...favourites, itemId];
+      
+      setFavourites(updatedFavourites);
+      localStorage.setItem("safedine.favourites", JSON.stringify(updatedFavourites));
+      
+      toast({
+        title: isCurrentlyFavourite ? "Removed from favorites" : "Added to favorites",
+        description: isCurrentlyFavourite 
+          ? "Item removed from your favorites." 
+          : "Item added to your favorites. Sign in to save across devices!",
+      });
+    }
   };
 
   const currentMenu = menus?.find(menu => menu.id === selectedMenu);
@@ -808,7 +929,7 @@ const MainHub = () => {
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+                  <UserIcon className="h-5 w-5 text-primary" />
                   My Profile
                 </CardTitle>
               </CardHeader>
@@ -1006,7 +1127,7 @@ const MainHub = () => {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <User className="h-5 w-5" />
+            <UserIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Profile</span>
           </button>
         </div>
