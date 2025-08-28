@@ -41,6 +41,8 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import OrderTracking from "@/components/OrderTracking";
+import OrderStatusDemo from "@/components/OrderStatusDemo";
 
 interface CartItem {
   id: string;
@@ -1211,6 +1213,54 @@ const MainHub = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="orders" className="mt-6 space-y-4">
+            {/* Real-time Order Tracking */}
+            <OrderTracking userId={user?.id} />
+            
+            {/* Demo Controls */}
+            <OrderStatusDemo />
+            
+            {/* Order History */}
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle>Order History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {userOrderHistory && userOrderHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {userOrderHistory.slice(0, 5).map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div>
+                          <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.created_at).toLocaleDateString()} • Table {order.table_code}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Status: {order.status}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">£{Number(order.total_amount).toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {Array.isArray(order.items) ? order.items.length : 0} items
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">No orders found</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Your order history will appear here
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="favourites" className="mt-6 space-y-4">
             <Card className="shadow-soft">
               <CardHeader>
@@ -1512,7 +1562,7 @@ const MainHub = () => {
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           <button
             onClick={() => setActiveTab("menu")}
             className={`flex flex-col items-center justify-center gap-1 transition-colors ${
@@ -1521,7 +1571,7 @@ const MainHub = () => {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
             <span className="text-xs font-medium">Menu</span>
           </button>
           
@@ -1533,13 +1583,25 @@ const MainHub = () => {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-4 w-4" />
             <span className="text-xs font-medium">Cart</span>
             {cartItemCount > 0 && (
               <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground p-0 flex items-center justify-center text-xs">
                 {cartItemCount}
               </Badge>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
+              activeTab === "orders" 
+                ? "text-primary bg-primary/5" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Clock className="h-4 w-4" />
+            <span className="text-xs font-medium">Orders</span>
           </button>
           
           <button
@@ -1550,7 +1612,7 @@ const MainHub = () => {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Heart className="h-5 w-5" />
+            <Heart className="h-4 w-4" />
             <span className="text-xs font-medium">Favourites</span>
           </button>
           
@@ -1562,7 +1624,7 @@ const MainHub = () => {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <UserIcon className="h-5 w-5" />
+            <UserIcon className="h-4 w-4" />
             <span className="text-xs font-medium">Profile</span>
           </button>
         </div>

@@ -217,8 +217,10 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          estimated_completion_at: string | null
           id: string
           items: Json
+          notes: string | null
           restaurant_id: string
           status: string
           table_code: string
@@ -229,8 +231,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          estimated_completion_at?: string | null
           id?: string
           items?: Json
+          notes?: string | null
           restaurant_id: string
           status?: string
           table_code: string
@@ -241,8 +245,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          estimated_completion_at?: string | null
           id?: string
           items?: Json
+          notes?: string | null
           restaurant_id?: string
           status?: string
           table_code?: string
