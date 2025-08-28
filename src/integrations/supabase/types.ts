@@ -73,6 +73,122 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          points: number
+          tier: Database["public"]["Enums"]["loyalty_tier"]
+          tier_progress: number
+          total_earned_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points?: number
+          tier?: Database["public"]["Enums"]["loyalty_tier"]
+          tier_progress?: number
+          total_earned_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points?: number
+          tier?: Database["public"]["Enums"]["loyalty_tier"]
+          tier_progress?: number
+          total_earned_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loyalty_rewards: {
+        Row: {
+          cost_points: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          min_tier: Database["public"]["Enums"]["loyalty_tier"]
+          name: string
+          reward_type: Database["public"]["Enums"]["reward_type"]
+          reward_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          cost_points: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_tier?: Database["public"]["Enums"]["loyalty_tier"]
+          name: string
+          reward_type: Database["public"]["Enums"]["reward_type"]
+          reward_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cost_points?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_tier?: Database["public"]["Enums"]["loyalty_tier"]
+          name?: string
+          reward_type?: Database["public"]["Enums"]["reward_type"]
+          reward_value?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          points: number
+          reference_id: string | null
+          reference_type: string | null
+          reward_id: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          points: number
+          reference_id?: string | null
+          reference_type?: string | null
+          reward_id?: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          points?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          reward_id?: string | null
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           created_at: string
@@ -421,15 +537,65 @@ export type Database = {
           },
         ]
       }
+      user_reward_redemptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_used: boolean
+          points_spent: number
+          reward_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          points_spent: number
+          reward_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_used?: boolean
+          points_spent?: number
+          reward_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_loyalty_tier: {
+        Args: { total_points: number }
+        Returns: Database["public"]["Enums"]["loyalty_tier"]
+      }
+      update_loyalty_profile: {
+        Args: { points_change: number; user_id_param: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
+      reward_type: "discount" | "free_item" | "points_multiplier"
+      transaction_type: "earned" | "redeemed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -556,6 +722,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      loyalty_tier: ["bronze", "silver", "gold", "platinum"],
+      reward_type: ["discount", "free_item", "points_multiplier"],
+      transaction_type: ["earned", "redeemed"],
+    },
   },
 } as const
