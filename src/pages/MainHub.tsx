@@ -86,6 +86,7 @@ const MainHub = () => {
   const [favourites, setFavourites] = useState<string[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
   const [restaurants, setRestaurants] = useState<RestaurantVisit[]>([]);
+  const [restaurantId, setRestaurantId] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [userPreferences, setUserPreferences] = useState<{
@@ -93,28 +94,28 @@ const MainHub = () => {
     diets: string[];
   }>({ allergens: [], diets: [] });
 
-  // Fetch restaurant and menu data
+  // Fetch restaurant data
   const { data: restaurantData } = useQuery({
-    queryKey: ['restaurant', restaurantName],
+    queryKey: ['restaurant', restaurantId],
     queryFn: async () => {
-      if (!restaurantName || restaurantName === "Acropolis Taverna") return null;
+      if (!restaurantId) return null;
       
       const { data, error } = await supabase
         .from('restaurants')
         .select('id, name, address')
-        .eq('name', restaurantName)
+        .eq('id', restaurantId)
         .single();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!restaurantName && restaurantName !== "Acropolis Taverna"
+    enabled: !!restaurantId
   });
 
   const { data: menus, isLoading: menusLoading } = useQuery({
-    queryKey: ['menus', restaurantData?.id],
+    queryKey: ['menus', restaurantId],
     queryFn: async () => {
-      if (!restaurantData?.id) return [];
+      if (!restaurantId) return [];
       
       const { data, error } = await supabase
         .from('menus')
@@ -143,7 +144,7 @@ const MainHub = () => {
             )
           )
         `)
-        .eq('restaurant_id', restaurantData.id)
+        .eq('restaurant_id', restaurantId)
         .eq('is_active', true)
         .order('display_order');
       
@@ -162,7 +163,7 @@ const MainHub = () => {
           }))
       })) as MenuType[];
     },
-    enabled: !!restaurantData?.id
+    enabled: !!restaurantId
   });
 
   useEffect(() => {
@@ -171,6 +172,7 @@ const MainHub = () => {
     const savedFavourites = localStorage.getItem("safedine.favourites");
     const savedHistory = localStorage.getItem("safedine.orderHistory");
     const savedRestaurants = localStorage.getItem("safedine.restaurants");
+    const savedRestaurantId = localStorage.getItem("safedine.restaurantId");
     const savedRestaurantName = localStorage.getItem("safedine.restaurantName");
     const savedTableCode = localStorage.getItem("safedine.tableCode");
     const savedPreferences = localStorage.getItem("safedine.preferences");
@@ -181,10 +183,52 @@ const MainHub = () => {
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
     if (savedPreferences) setUserPreferences(JSON.parse(savedPreferences));
     
-    // Set restaurant name and table
-    setRestaurantName(savedRestaurantName || "Acropolis Taverna");
+    // Set restaurant ID and table
+    if (savedRestaurantId) {
+      setRestaurantId(savedRestaurantId);
+    } else if (savedRestaurantName) {
+      // Fallback: if only restaurant name exists, try to find ID by name
+      // This will be handled by the fallback query below
+      setRestaurantName(savedRestaurantName);
+    }
     setTableNumber(savedTableCode || "Unknown");
   }, []);
+
+  // Fallback query to find restaurant by name if no ID is stored
+  const { data: restaurantByName } = useQuery({
+    queryKey: ['restaurant-by-name', restaurantName],
+    queryFn: async () => {
+      if (!restaurantName || restaurantId) return null; // Only run if we have name but no ID
+      
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('id, name, address')
+        .eq('name', restaurantName)
+        .maybeSingle(); // Use maybeSingle to avoid errors if not found
+      
+      if (error) {
+        console.error('Error finding restaurant by name:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!restaurantName && !restaurantId
+  });
+
+  useEffect(() => {
+    // If we found restaurant by name, update the ID
+    if (restaurantByName) {
+      setRestaurantId(restaurantByName.id);
+      localStorage.setItem("safedine.restaurantId", restaurantByName.id);
+    }
+  }, [restaurantByName]);
+
+  useEffect(() => {
+    // Update restaurant name when restaurant data loads
+    if (restaurantData) {
+      setRestaurantName(restaurantData.name);
+    }
+  }, [restaurantData]);
 
   useEffect(() => {
     // Set first menu as default when menus load
@@ -322,21 +366,36 @@ const MainHub = () => {
                 </CardContent>
               </Card>
             ) : !menus || menus.length === 0 ? (
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Menu className="h-5 w-5 text-primary" />
-                    Menu (Safe for You)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <EmptyState
-                    icon={Menu}
-                    title="Menu Coming Soon"
-                    description="Your personalized safe menu will appear here based on your dietary preferences."
-                  />
-                </CardContent>
-              </Card>
+                <Card className="shadow-soft">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Menu className="h-5 w-5 text-primary" />
+                      Menu (Safe for You)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <EmptyState
+                      icon={Menu}
+                      title="Menu Coming Soon"
+                      description="Your personalized safe menu will appear here based on your dietary preferences."
+                    />
+                    {/* Debug button for testing */}
+                    <div className="mt-4 pt-4 border-t">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Set The Real Greek restaurant for testing
+                          localStorage.setItem("safedine.restaurantId", "48aec4e3-47c8-4829-86a8-e6424fc446c8");
+                          localStorage.setItem("safedine.restaurantName", "The Real Greek");
+                          window.location.reload();
+                        }}
+                        className="w-full"
+                      >
+                        Test with The Real Greek Menu
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
             ) : (
               <>
                 {/* Menu Type Selector */}
