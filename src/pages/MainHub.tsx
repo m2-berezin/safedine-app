@@ -46,6 +46,7 @@ import ReviewsList from "@/components/ReviewsList";
 import MenuItemSkeleton from "@/components/skeletons/MenuItemSkeleton";
 import FadeInUp from "@/components/animations/FadeInUp";
 import { LoadingCard, SkeletonGrid, EmptyState } from "@/components/LoadingStates";
+import OrderDetailsModal from "@/components/OrderDetailsModal";
 
 interface CartItem {
   id: string;
@@ -123,6 +124,8 @@ const MainHub = () => {
   }>({ allergens: [], diets: [] });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderHistory | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [appSettings, setAppSettings] = useState({
     notifications: true,
     emailNotifications: true,
@@ -673,6 +676,16 @@ const MainHub = () => {
     }
   };
 
+  const handleOrderClick = (order: OrderHistory) => {
+    setSelectedOrder(order);
+    setOrderDetailsOpen(true);
+  };
+
+  const handleCloseOrderDetails = () => {
+    setOrderDetailsOpen(false);
+    setSelectedOrder(null);
+  };
+
   const handlePlaceOrder = async () => {
     console.log('Starting order placement...');
     console.log('User:', user?.id);
@@ -1215,7 +1228,11 @@ const MainHub = () => {
                 {userOrderHistory && userOrderHistory.length > 0 ? (
                   <div className="space-y-4">
                     {userOrderHistory.slice(0, 5).map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <button
+                        key={order.id}
+                        onClick={() => handleOrderClick(order)}
+                        className="w-full flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left"
+                      >
                         <div>
                           <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
                           <p className="text-sm text-muted-foreground">
@@ -1231,7 +1248,7 @@ const MainHub = () => {
                             {Array.isArray(order.items) ? order.items.length : 0} items
                           </p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -1338,10 +1355,6 @@ const MainHub = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reviews" className="mt-6 space-y-4">
-            <ReviewsList restaurantId={restaurantId} currentUserId={user?.id} />
-          </TabsContent>
-
           <TabsContent value="profile" className="mt-6 space-y-4">
             {/* Profile Summary */}
             <Card className="shadow-soft">
@@ -1397,10 +1410,14 @@ const MainHub = () => {
                 ) : (
                   <div className="space-y-3">
                     {userOrderHistory.map((order) => (
-                      <div key={order.id} className="p-3 bg-muted rounded-lg">
+                      <button
+                        key={order.id}
+                        onClick={() => handleOrderClick(order)}
+                        className="w-full p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-left"
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h4 className="font-medium">Table {order.table_code}</h4>
+                            <h4 className="font-medium">Order #{order.id.slice(0, 8)}</h4>
                             <p className="text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
@@ -1408,27 +1425,26 @@ const MainHub = () => {
                               {order.status}
                             </Badge>
                           </div>
-                          <p className="font-semibold">£{order.total_amount.toFixed(2)}</p>
+                          <div className="text-right">
+                            <p className="font-bold">£{Number(order.total_amount).toFixed(2)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {Array.isArray(order.items) ? order.items.length : 0} items
+                            </p>
+                            {order.status === 'completed' && (
+                              <p className="text-xs text-primary mt-1">
+                                Click to review →
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          {Array.isArray(order.items) && (order.items as unknown as CartItem[]).map((item: CartItem, index: number) => (
-                            <span key={index}>
-                              {item.quantity}x {item.name}
-                              {index < (order.items as unknown as CartItem[]).length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
-                        </div>
-                        <Button size="sm" variant="outline" onClick={() => handleReorder(order)}>
-                          Reorder
-                        </Button>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Restaurants Visited */}
+            {/* Favourite Restaurants */}
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1604,18 +1620,6 @@ const MainHub = () => {
           >
             <Heart className="h-4 w-4" />
             <span className="text-xs font-medium">Favourites</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("reviews")}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              activeTab === "reviews" 
-                ? "text-primary bg-primary/5" 
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Star className="h-4 w-4" />
-            <span className="text-xs font-medium">Reviews</span>
           </button>
           
           <button
@@ -1925,6 +1929,14 @@ const MainHub = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        order={selectedOrder}
+        isOpen={orderDetailsOpen}
+        onClose={handleCloseOrderDetails}
+        currentUserId={user?.id}
+      />
     </div>
   );
 };
