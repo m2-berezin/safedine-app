@@ -1637,6 +1637,38 @@ const MainHub = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Account Actions */}
+            {user?.id && (
+              <Card className="shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserIcon className="h-5 w-5 text-primary" />
+                    Account Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log Off
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={handleDeleteAccount}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

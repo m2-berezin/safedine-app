@@ -645,6 +645,10 @@ export type Database = {
         Args: { total_points: number }
         Returns: Database["public"]["Enums"]["loyalty_tier"]
       }
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_loyalty_profile: {
         Args: { points_change: number; user_id_param: string }
         Returns: undefined
