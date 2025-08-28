@@ -1474,12 +1474,7 @@ const MainHub = () => {
                   variant="outline" 
                   className="w-full justify-start" 
                   size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Frequently Asked Questions",
-                      description: "Common questions: How to order, allergen info, payment methods, and more at safedine.com/faq",
-                    });
-                  }}
+                  onClick={() => navigate("/faqs")}
                 >
                   <HelpCircle className="h-4 w-4 mr-2" />
                   FAQs
