@@ -23,7 +23,9 @@ import {
   FileText,
   Shield,
   Plus,
-  Star
+  Star,
+  Minus,
+  Trash2
 } from "lucide-react";
 
 interface CartItem {
@@ -307,6 +309,27 @@ const MainHub = () => {
       setCartItems(updatedCart);
       localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
     }
+  };
+
+  const removeFromCart = (itemId: string) => {
+    const updatedCart = cartItems.filter(cartItem => cartItem.id !== itemId);
+    setCartItems(updatedCart);
+    localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
+  };
+
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+    
+    const updatedCart = cartItems.map(cartItem =>
+      cartItem.id === itemId
+        ? { ...cartItem, quantity: newQuantity }
+        : cartItem
+    );
+    setCartItems(updatedCart);
+    localStorage.setItem("safedine.cart", JSON.stringify(updatedCart));
   };
 
   const toggleFavourite = (itemId: string) => {
@@ -630,14 +653,59 @@ const MainHub = () => {
                 ) : (
                   <div className="space-y-3">
                     {cartItems.map((item) => (
-                      <div key={item.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <div>
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex-1">
                           <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                          <p className="text-sm text-muted-foreground">£{item.price.toFixed(2)} each</p>
                         </div>
-                        <p className="font-semibold">£{(item.price * item.quantity).toFixed(2)}</p>
+                        
+                        <div className="flex items-center gap-3">
+                          {/* Quantity Controls */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="font-medium min-w-[2rem] text-center">{item.quantity}</span>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          {/* Total Price */}
+                          <p className="font-semibold min-w-[4rem] text-right">
+                            £{(item.price * item.quantity).toFixed(2)}
+                          </p>
+                          
+                          {/* Remove Button */}
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => removeFromCart(item.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
+                    
+                    {/* Cart Total */}
+                    <div className="border-t pt-3 mt-4">
+                      <div className="flex justify-between items-center text-lg font-semibold">
+                        <span>Total:</span>
+                        <span>£{cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
