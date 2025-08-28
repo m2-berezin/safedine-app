@@ -153,15 +153,9 @@ export default function TableSelection() {
 
       <main className="px-4 py-6">
         {/* Tables Grid */}
-        {tables.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              No tables available for this restaurant.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            {tables.map((table) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+          {tables.length > 0 ? (
+            tables.map((table) => (
               <Card
                 key={table.id}
                 className={`cursor-pointer transition-all duration-300 hover:shadow-medium active:scale-95 rounded-lg border ${
@@ -186,9 +180,37 @@ export default function TableSelection() {
                   </span>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            // Show tables 1-35 even if database query fails
+            Array.from({ length: 35 }, (_, i) => i + 1).map((tableNum) => (
+              <Card
+                key={tableNum}
+                className={`cursor-pointer transition-all duration-300 hover:shadow-medium active:scale-95 rounded-lg border ${
+                  selectedTable?.code === tableNum.toString()
+                    ? "ring-2 ring-primary bg-primary/10 border-primary shadow-medium"
+                    : "border-border hover:border-primary/30 hover:bg-primary/5 shadow-soft"
+                }`}
+                onClick={() => handleTableSelect({ id: `temp-${tableNum}`, restaurant_id: restaurantId || "", code: tableNum.toString() })}
+                role="button"
+                tabIndex={0}
+                aria-label={`Select table ${tableNum}`}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleTableSelect({ id: `temp-${tableNum}`, restaurant_id: restaurantId || "", code: tableNum.toString() });
+                  }
+                }}
+              >
+                <CardContent className="p-6 text-center min-h-[60px] flex items-center justify-center">
+                  <span className="text-2xl font-bold text-foreground">
+                    {tableNum}
+                  </span>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
 
         {/* Selected Table Summary */}
         {selectedTable && (
