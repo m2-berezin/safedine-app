@@ -466,6 +466,76 @@ const MainHub = () => {
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handlePlaceOrder = async () => {
+    if (!user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please sign in to place an order.",
+      });
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Empty Cart",
+        description: "Please add items to your cart before ordering.",
+      });
+      return;
+    }
+
+    const tableId = localStorage.getItem("safedine.tableId");
+    const tableCode = localStorage.getItem("safedine.tableCode");
+
+    if (!tableId || !tableCode) {
+      toast({
+        variant: "destructive",
+        title: "Table Information Missing",
+        description: "Please select a table first.",
+      });
+      return;
+    }
+
+    try {
+      const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      const { error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          restaurant_id: restaurantId,
+          table_id: tableId,
+          table_code: tableCode,
+          items: cartItems as any,
+          total_amount: totalAmount,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      // Clear cart after successful order
+      setCartItems([]);
+      localStorage.removeItem("safedine.cart");
+
+      toast({
+        title: "Order Placed Successfully!",
+        description: `Your order has been sent to Table ${tableCode}. Total: £${totalAmount.toFixed(2)}`,
+      });
+
+      // Switch to profile tab to potentially show order history
+      setActiveTab("profile");
+
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        variant: "destructive",
+        title: "Order Failed",
+        description: "Failed to place your order. Please try again.",
+      });
+    }
+  };
+
   const EmptyState = ({ icon: Icon, title, description }: { 
     icon: any, 
     title: string, 
@@ -822,10 +892,20 @@ const MainHub = () => {
                     
                     {/* Cart Total */}
                     <div className="border-t pt-3 mt-4">
-                      <div className="flex justify-between items-center text-lg font-semibold">
+                      <div className="flex justify-between items-center text-lg font-semibold mb-4">
                         <span>Total:</span>
                         <span>£{cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
                       </div>
+                      
+                      {/* Order Button */}
+                      <Button 
+                        onClick={handlePlaceOrder}
+                        className="w-full h-12 text-base font-semibold"
+                        size="lg"
+                        disabled={cartItems.length === 0}
+                      >
+                        Order to Table
+                      </Button>
                     </div>
                   </div>
                 )}
