@@ -1455,12 +1455,7 @@ const MainHub = () => {
                   variant="outline" 
                   className="w-full justify-start" 
                   size="sm"
-                  onClick={() => {
-                    toast({
-                      title: "Contact Form",
-                      description: "Send us a message: help@safedine.com or use the form at safedine.com/contact",
-                    });
-                  }}
+                  onClick={() => navigate("/contact")}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contact Form
