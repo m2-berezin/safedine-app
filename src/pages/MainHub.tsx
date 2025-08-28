@@ -62,7 +62,7 @@ const MainHub = () => {
     const savedFavourites = localStorage.getItem("safedine.favourites");
     const savedHistory = localStorage.getItem("safedine.orderHistory");
     const savedRestaurants = localStorage.getItem("safedine.restaurants");
-    const savedRestaurantId = localStorage.getItem("safedine.restaurantId");
+    const savedRestaurantName = localStorage.getItem("safedine.restaurantName");
     const savedTableCode = localStorage.getItem("safedine.tableCode");
 
     if (savedCart) setCartItems(JSON.parse(savedCart));
@@ -71,7 +71,7 @@ const MainHub = () => {
     if (savedRestaurants) setRestaurants(JSON.parse(savedRestaurants));
     
     // Set restaurant name and table - in a real app this would come from API
-    setRestaurantName(savedRestaurantId || "Acropolis Taverna");
+    setRestaurantName(savedRestaurantName || "Acropolis Taverna");
     setTableNumber(savedTableCode || "Unknown");
   }, []);
 
