@@ -263,13 +263,13 @@ const MainHub = () => {
       const hasVegetarian = userPreferences.diets.includes('V');
       const itemHasV = item.dietary_info.includes('V');
       const itemHasVG = item.dietary_info.includes('VG');
-      const itemHasD = item.dietary_info.includes('D');
+      const itemHasDairy = item.allergens.includes('D'); // Check allergens for dairy
       const hasNeitherVNorVG = !itemHasV && !itemHasVG;
       
       if (hasVegan) {
         // Vegans can see items with VG symbol OR items with neither V nor VG symbols
-        // BUT NOT items with D (dairy) symbol
-        matchesDietaryPrefs = (itemHasVG || hasNeitherVNorVG) && !itemHasD;
+        // BUT NOT items with D (dairy) allergen
+        matchesDietaryPrefs = (itemHasVG || hasNeitherVNorVG) && !itemHasDairy;
       } else if (hasVegetarian) {
         // Vegetarians can see items with V or VG symbols OR items with neither V nor VG symbols
         matchesDietaryPrefs = itemHasV || itemHasVG || hasNeitherVNorVG;
